@@ -1,65 +1,141 @@
-import Image from "next/image";
+"use client";
+
+import React from "react";
+import { Statistic, Row, Col, Card, Tooltip } from "antd";
+import { InfoCircleOutlined } from "@ant-design/icons";
+import { TimerCard } from "@/components/TimerCard";
+import { Timeline } from "@/components/Timeline/Timeline";
+import { PomodoroPanel } from "@/components/PomodoroPanel";
+import { RecoveryModal } from "@/components/Modals/RecoveryModal";
+import { useTimer } from "@/hooks/useTimer";
+import { usePomodoro } from "@/hooks/usePomodoro";
+import { useSessionRecovery } from "@/hooks/useSessionRecovery";
+import { useAppInitialization } from "@/hooks/useAppInitialization";
+import { useAppDispatch, useAppState } from "@/contexts/AppContext";
+import { formatDuration } from "@/lib/time-utils";
+import { cleanupInvalidSessions } from "@/lib/db/operations";
 
 export default function Home() {
+  const dispatch = useAppDispatch();
+  const state = useAppState();
+  const timer = useTimer();
+  const pomodoro = usePomodoro();
+  const recovery = useSessionRecovery();
+  const { sessions, todayStats, refreshData } = useAppInitialization();
+
+  const handleStart = async () => {
+    try {
+      await timer.start("normal");
+    } catch (error) {
+      console.error("Failed to start timer:", error);
+    }
+  };
+
+  const handleStop = async () => {
+    try {
+      // Check if Pomodoro is active
+      const isPomodoroActive =
+        state.pomodoro.state === "work" ||
+        state.pomodoro.state === "break" ||
+        state.pomodoro.state === "work-paused" ||
+        state.pomodoro.state === "break-paused";
+
+      if (isPomodoroActive) {
+        // If Pomodoro is active, cancel it (which also stops the timer)
+        await pomodoro.cancel();
+      } else {
+        // Otherwise just stop the regular timer
+        await timer.stop();
+      }
+    } catch (error) {
+      console.error("Failed to stop timer:", error);
+    }
+  };
+
+  const handleReset = async () => {
+    try {
+      // Force reset timer state
+      dispatch({ type: "SET_CURRENT_TIME", payload: 0 });
+      dispatch({ type: "SET_RUNNING", payload: false });
+      dispatch({ type: "SET_CURRENT_SESSION", payload: null });
+
+      // Cleanup any invalid sessions
+      const deletedCount = await cleanupInvalidSessions();
+
+      if (deletedCount > 0) {
+        console.log(`Reset: Cleaned up ${deletedCount} corrupted sessions`);
+        // Reload data after cleanup
+        await refreshData();
+      }
+    } catch (error) {
+      console.error("Failed to reset timer:", error);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="container mx-auto px-4 py-6 space-y-6">
+      {/* Recovery Modal */}
+      <RecoveryModal
+        open={recovery.showRecoveryModal}
+        session={recovery.unfinishedSession}
+        onClose={recovery.clearSession}
+      />
+
+      {/* Timer and Pomodoro Row */}
+      <Row gutter={[16, 16]}>
+        {/* Pomodoro Panel */}
+        <Col xs={24} lg={10}>
+          <PomodoroPanel />
+        </Col>
+
+        {/* Timer Card */}
+        <Col xs={24} lg={14}>
+          <TimerCard
+            currentTime={timer.currentTime}
+            isRunning={timer.isRunning}
+            sessionType={timer.currentSession?.type}
+            pomodoroActive={state.pomodoro.state !== "idle" && state.pomodoro.state !== "completed"}
+            onStart={handleStart}
+            onStop={handleStop}
+            onReset={handleReset}
+          />
+        </Col>
+      </Row>
+
+      {/* Today's Summary */}
+      {todayStats && (
+        <Card>
+          <Row gutter={16}>
+            <Col xs={24} sm={8}>
+              <Statistic
+                title="Tổng thời gian hôm nay"
+                value={formatDuration(todayStats.totalSeconds)}
+                styles={{ content: { color: "#3f8600" } }}
+              />
+            </Col>
+            <Col xs={24} sm={8}>
+              <Statistic
+                title={
+                  <span className="flex items-center gap-1">
+                    Số phiên học
+                    <Tooltip title="Chỉ tính các phiên học >= 1 phút. Phiên < 1 phút sẽ bị bỏ qua.">
+                      <InfoCircleOutlined className="text-gray-400 cursor-help" style={{ fontSize: "14px" }} />
+                    </Tooltip>
+                  </span>
+                }
+                value={todayStats.sessionCount}
+                suffix="phiên"
+              />
+            </Col>
+            <Col xs={24} sm={8}>
+              <Statistic title="Trung bình/phiên" value={formatDuration(todayStats.averageSessionDuration)} />
+            </Col>
+          </Row>
+        </Card>
+      )}
+
+      {/* Timeline Full Width */}
+      <Timeline sessions={sessions} currentSession={timer.currentSession} />
     </div>
   );
 }
