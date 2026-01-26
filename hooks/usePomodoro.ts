@@ -1,42 +1,54 @@
 "use client";
 
 import { useEffect, useCallback } from "react";
-import { useAppState, useAppDispatch } from "@/contexts/AppContext";
+import { usePomodoroStore } from "@/store/usePomodoroStore";
+import { useSettingsStore } from "@/store/useSettingsStore";
 import { useTimer } from "./useTimer";
 
 export function usePomodoro() {
-  const state = useAppState();
-  const dispatch = useAppDispatch();
+  const {
+    state: pomodoroState,
+    remainingSeconds,
+    cycleCount,
+    setPomodoroState,
+    setPomodoroRemaining,
+    incrementPomodoroCycle,
+    resetPomodoro,
+  } = usePomodoroStore();
+  const settings = useSettingsStore((state) => state.settings);
   const timer = useTimer();
 
-  const { pomodoro, settings } = state;
-
   /**
-   * Play notification sound
+   * Play notification sound when timer completes
    */
   const playSound = useCallback(() => {
     if (!settings.pomodoro.soundEnabled) return;
 
     try {
-      // Create a simple beep sound using Web Audio API
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
-      oscillator.frequency.value = 800;
-      oscillator.type = "sine";
-
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.5);
+      const audio = new Audio("/sounds/alarm-kitchen.mp3");
+      audio.volume = 0.5;
+      audio.play().catch((error) => {
+        console.error("Failed to play alarm sound:", error);
+      });
     } catch (error) {
       console.error("Failed to play sound:", error);
+    }
+  }, [settings.pomodoro.soundEnabled]);
+
+  /**
+   * Play button click sound
+   */
+  const playButtonSound = useCallback(() => {
+    if (!settings.pomodoro.soundEnabled) return;
+
+    try {
+      const audio = new Audio("/sounds/button.wav");
+      audio.volume = 0.3;
+      audio.play().catch((error) => {
+        console.error("Failed to play button sound:", error);
+      });
+    } catch (error) {
+      console.error("Failed to play button sound:", error);
     }
   }, [settings.pomodoro.soundEnabled]);
 
@@ -59,19 +71,19 @@ export function usePomodoro() {
    */
   const startWork = useCallback(async () => {
     try {
+      // Play button sound
+      playButtonSound();
+
       // Start timer with pomodoro-work type
       await timer.start("pomodoro-work");
 
       // Update Pomodoro state
-      dispatch({ type: "SET_POMODORO_STATE", payload: "work" });
-      dispatch({
-        type: "SET_POMODORO_REMAINING",
-        payload: settings.pomodoro.workDuration,
-      });
+      setPomodoroState("work");
+      setPomodoroRemaining(settings.pomodoro.workDuration);
     } catch (error) {
       console.error("Failed to start Pomodoro work:", error);
     }
-  }, [timer, dispatch, settings.pomodoro.workDuration]);
+  }, [playButtonSound, timer, setPomodoroState, setPomodoroRemaining, settings.pomodoro.workDuration]);
 
   /**
    * Start Pomodoro break session
@@ -82,56 +94,53 @@ export function usePomodoro() {
       await timer.start("pomodoro-break");
 
       // Update Pomodoro state
-      dispatch({ type: "SET_POMODORO_STATE", payload: "break" });
-      dispatch({
-        type: "SET_POMODORO_REMAINING",
-        payload: settings.pomodoro.breakDuration,
-      });
+      setPomodoroState("break");
+      setPomodoroRemaining(settings.pomodoro.breakDuration);
     } catch (error) {
       console.error("Failed to start Pomodoro break:", error);
     }
-  }, [timer, dispatch, settings.pomodoro.breakDuration]);
+  }, [timer, setPomodoroState, setPomodoroRemaining, settings.pomodoro.breakDuration]);
 
   /**
    * Pause Pomodoro
    */
   const pause = useCallback(() => {
-    if (pomodoro.state === "work") {
-      dispatch({ type: "SET_POMODORO_STATE", payload: "work-paused" });
-    } else if (pomodoro.state === "break") {
-      dispatch({ type: "SET_POMODORO_STATE", payload: "break-paused" });
+    if (pomodoroState === "work") {
+      setPomodoroState("work-paused");
+    } else if (pomodoroState === "break") {
+      setPomodoroState("break-paused");
     }
-  }, [pomodoro.state, dispatch]);
+  }, [pomodoroState, setPomodoroState]);
 
   /**
    * Resume Pomodoro
    */
   const resumePomodoro = useCallback(() => {
-    if (pomodoro.state === "work-paused") {
-      dispatch({ type: "SET_POMODORO_STATE", payload: "work" });
-    } else if (pomodoro.state === "break-paused") {
-      dispatch({ type: "SET_POMODORO_STATE", payload: "break" });
+    if (pomodoroState === "work-paused") {
+      setPomodoroState("work");
+    } else if (pomodoroState === "break-paused") {
+      setPomodoroState("break");
     }
-  }, [pomodoro.state, dispatch]);
+  }, [pomodoroState, setPomodoroState]);
 
   /**
    * Skip break and start new work session
    */
   const skipBreak = useCallback(async () => {
-    if (pomodoro.state === "break" || pomodoro.state === "break-paused") {
+    if (pomodoroState === "break" || pomodoroState === "break-paused") {
       await timer.stop();
-      dispatch({ type: "INCREMENT_POMODORO_CYCLE" });
+      incrementPomodoroCycle();
       await startWork();
     }
-  }, [pomodoro.state, timer, dispatch, startWork]);
+  }, [pomodoroState, timer, incrementPomodoroCycle, startWork]);
 
   /**
    * Cancel Pomodoro cycle
    */
   const cancelPomodoro = useCallback(async () => {
     await timer.cancel();
-    dispatch({ type: "RESET_POMODORO" });
-  }, [timer, dispatch]);
+    resetPomodoro(settings.pomodoro.workDuration);
+  }, [timer, resetPomodoro, settings.pomodoro.workDuration]);
 
   /**
    * Complete current phase and move to next
@@ -139,50 +148,53 @@ export function usePomodoro() {
   const completePhase = useCallback(async () => {
     await timer.stop();
 
-    if (pomodoro.state === "work") {
+    if (pomodoroState === "work") {
       // Work completed, show notification
       playSound();
       showNotification("Pomodoro hoàn thành!", "Bạn đã hoàn thành 25 phút học tập. Giờ nghỉ ngơi!");
 
-      dispatch({ type: "INCREMENT_POMODORO_CYCLE" });
+      incrementPomodoroCycle();
 
       // Auto-start break if enabled
       if (settings.pomodoro.autoStartBreak) {
         await startBreak();
       } else {
-        dispatch({ type: "SET_POMODORO_STATE", payload: "completed" });
+        setPomodoroState("completed");
       }
-    } else if (pomodoro.state === "break") {
+    } else if (pomodoroState === "break") {
       // Break completed
       playSound();
       showNotification("Giờ nghỉ kết thúc!", "Sẵn sàng cho chu kỳ Pomodoro tiếp theo?");
 
-      dispatch({ type: "SET_POMODORO_STATE", payload: "idle" });
+      setPomodoroState("idle");
     }
-  }, [pomodoro.state, timer, dispatch, playSound, showNotification, settings.pomodoro.autoStartBreak, startBreak]);
+  }, [
+    pomodoroState,
+    timer,
+    playSound,
+    showNotification,
+    settings.pomodoro.autoStartBreak,
+    startBreak,
+    incrementPomodoroCycle,
+    setPomodoroState,
+  ]);
 
-  /**
-   * Countdown effect
-   */
   /**
    * Sync Pomodoro with Timer (Countdown effect)
    * Instead of a separate interval, we derive remaining time from the main timer
    */
   useEffect(() => {
     // Only run if we are in an active work or break phase
-    if (pomodoro.state === "work" || pomodoro.state === "break") {
-      const duration = pomodoro.state === "work" ? settings.pomodoro.workDuration : settings.pomodoro.breakDuration;
+    if (pomodoroState === "work" || pomodoroState === "break") {
+      const duration = pomodoroState === "work" ? settings.pomodoro.workDuration : settings.pomodoro.breakDuration;
 
       // Calculate remaining time based on main timer
       // This ensures Pomodoro and Main Timer are always in sync
       const remaining = Math.max(0, duration - timer.currentTime);
 
       // Only dispatch if value changed to avoid infinite loops
-      if (remaining !== pomodoro.remainingSeconds) {
-        dispatch({
-          type: "SET_POMODORO_REMAINING",
-          payload: remaining,
-        });
+      if (remaining !== remainingSeconds) {
+        setPomodoroRemaining(remaining);
       }
 
       // Check if time is up
@@ -192,11 +204,11 @@ export function usePomodoro() {
     }
   }, [
     timer.currentTime,
-    pomodoro.state,
-    pomodoro.remainingSeconds,
+    pomodoroState,
+    remainingSeconds,
     settings.pomodoro.workDuration,
     settings.pomodoro.breakDuration,
-    dispatch,
+    setPomodoroRemaining,
     completePhase,
   ]);
 
@@ -210,9 +222,9 @@ export function usePomodoro() {
   }, []);
 
   return {
-    state: pomodoro.state,
-    remainingSeconds: pomodoro.remainingSeconds,
-    cycleCount: pomodoro.cycleCount,
+    state: pomodoroState,
+    remainingSeconds,
+    cycleCount,
     startWork,
     startBreak,
     pause,

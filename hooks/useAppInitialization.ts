@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAppDispatch } from "@/contexts/AppContext";
+import { useSettingsStore } from "@/store/useSettingsStore";
 import { initializeDatabase } from "@/lib/db/schema";
 import { cleanupInvalidSessions, getSettings, getTodaySessions, getTodayStats } from "@/lib/db/operations";
 import type { StudySession, DailyStat } from "@/types";
@@ -17,7 +17,7 @@ interface UseAppInitializationReturn {
  * Handles database setup, cleanup, settings, and today's data
  */
 export function useAppInitialization(): UseAppInitializationReturn {
-  const dispatch = useAppDispatch();
+  const setSettings = useSettingsStore((state) => state.setSettings);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [sessions, setSessions] = useState<StudySession[]>([]);
@@ -51,7 +51,7 @@ export function useAppInitialization(): UseAppInitializationReturn {
         // Load settings
         const settings = await getSettings();
         if (settings) {
-          dispatch({ type: "SET_SETTINGS", payload: settings });
+          setSettings(settings);
         }
 
         // Load today's sessions and stats
@@ -66,7 +66,7 @@ export function useAppInitialization(): UseAppInitializationReturn {
     }
 
     init();
-  }, [dispatch]);
+  }, [setSettings]);
 
   const refreshData = async () => {
     try {

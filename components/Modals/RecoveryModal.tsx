@@ -81,18 +81,11 @@ export function RecoveryModal({ open, session, onClose }: RecoveryModalProps) {
         <p className="text-sm text-gray-600 mb-4">Bạn muốn làm gì với phiên học này?</p>
 
         <Space orientation="vertical" className="w-full" size="middle">
-          <Button
-            type="primary"
-            icon={<PlayCircleOutlined />}
-            onClick={handleResume}
-            loading={loading}
-            block
-            size="large"
-          >
+          <Button type="primary" icon={<PlayCircleOutlined />} onClick={handleResume} loading={loading} block>
             Tiếp tục phiên học
           </Button>
 
-          <Button icon={<CheckCircleOutlined />} onClick={handleComplete} loading={loading} block size="large">
+          <Button icon={<CheckCircleOutlined />} onClick={handleComplete} loading={loading} block>
             Kết thúc phiên học
           </Button>
 

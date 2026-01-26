@@ -31,23 +31,23 @@ export function AppHeader() {
       <div className="container mx-auto px-4 flex items-center justify-between h-full">
         <div className="flex items-center cursor-pointer" onClick={() => router.push(ROUTES.HOME)}>
           <Image
-            src="/logo.png"
+            src="/images/logo.png"
             alt="Study Time Tracker Logo"
             width={200}
-            height={200}
-            className="rounded-lg"
+            height={60}
+            className="rounded-lg w-auto"
             priority
           />
         </div>
 
         {/* Navigation Button - changes based on route */}
         {isCurrentRoute(pathname, ROUTES.HOME) && (
-          <Button type="primary" icon={<BarChartOutlined />} onClick={() => router.push(ROUTES.STATS)} size="middle">
+          <Button type="primary" icon={<BarChartOutlined />} onClick={() => router.push(ROUTES.STATS)}>
             Thống kê
           </Button>
         )}
         {isCurrentRoute(pathname, ROUTES.STATS) && (
-          <Button type="primary" icon={<ArrowLeftOutlined />} onClick={() => router.push(ROUTES.HOME)} size="middle">
+          <Button type="primary" icon={<ArrowLeftOutlined />} onClick={() => router.push(ROUTES.HOME)}>
             Quay lại
           </Button>
         )}

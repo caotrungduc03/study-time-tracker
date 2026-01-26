@@ -11,15 +11,16 @@ import { useTimer } from "@/hooks/useTimer";
 import { usePomodoro } from "@/hooks/usePomodoro";
 import { useSessionRecovery } from "@/hooks/useSessionRecovery";
 import { useAppInitialization } from "@/hooks/useAppInitialization";
-import { useAppDispatch, useAppState } from "@/contexts/AppContext";
+import { usePomodoroStore } from "@/store/usePomodoroStore";
+import { useTimerStore } from "@/store/useTimerStore";
 import { formatDuration } from "@/lib/time-utils";
 import { cleanupInvalidSessions } from "@/lib/db/operations";
 
 export default function Home() {
-  const dispatch = useAppDispatch();
-  const state = useAppState();
+  const pomodoroState = usePomodoroStore((state) => state.state);
+  const { setRunning, setCurrentTime, setCurrentSession } = useTimerStore();
   const timer = useTimer();
-  const pomodoro = usePomodoro();
+  const pomodoroHook = usePomodoro();
   const recovery = useSessionRecovery();
   const { sessions, todayStats, refreshData } = useAppInitialization();
 
@@ -35,14 +36,14 @@ export default function Home() {
     try {
       // Check if Pomodoro is active
       const isPomodoroActive =
-        state.pomodoro.state === "work" ||
-        state.pomodoro.state === "break" ||
-        state.pomodoro.state === "work-paused" ||
-        state.pomodoro.state === "break-paused";
+        pomodoroState === "work" ||
+        pomodoroState === "break" ||
+        pomodoroState === "work-paused" ||
+        pomodoroState === "break-paused";
 
       if (isPomodoroActive) {
         // If Pomodoro is active, cancel it (which also stops the timer)
-        await pomodoro.cancel();
+        await pomodoroHook.cancel();
       } else {
         // Otherwise just stop the regular timer
         await timer.stop();
@@ -55,9 +56,9 @@ export default function Home() {
   const handleReset = async () => {
     try {
       // Force reset timer state
-      dispatch({ type: "SET_CURRENT_TIME", payload: 0 });
-      dispatch({ type: "SET_RUNNING", payload: false });
-      dispatch({ type: "SET_CURRENT_SESSION", payload: null });
+      setCurrentTime(0);
+      setRunning(false);
+      setCurrentSession(null);
 
       // Cleanup any invalid sessions
       const deletedCount = await cleanupInvalidSessions();
@@ -94,7 +95,7 @@ export default function Home() {
             currentTime={timer.currentTime}
             isRunning={timer.isRunning}
             sessionType={timer.currentSession?.type}
-            pomodoroActive={state.pomodoro.state !== "idle" && state.pomodoro.state !== "completed"}
+            pomodoroActive={pomodoroState !== "idle" && pomodoroState !== "completed"}
             onStart={handleStart}
             onStop={handleStop}
             onReset={handleReset}

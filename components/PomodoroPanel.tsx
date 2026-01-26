@@ -3,97 +3,68 @@
 import React from "react";
 import { Card, Button, InputNumber, Switch, Space, Divider, Progress } from "antd";
 import { PlayCircleOutlined, PauseOutlined, CloseCircleOutlined, FastForwardOutlined } from "@ant-design/icons";
-import { useAppState, useAppDispatch } from "@/contexts/AppContext";
+import { useSettingsStore } from "@/store/useSettingsStore";
 import { usePomodoro } from "@/hooks/usePomodoro";
 import { formatTime } from "@/lib/time-utils";
 import { updateSettings } from "@/lib/db/operations";
 
 export function PomodoroPanel() {
-  const state = useAppState();
-  const dispatch = useAppDispatch();
+  const { settings, setSettings } = useSettingsStore();
   const pomodoro = usePomodoro();
 
-  const workMinutes = Math.floor(state.settings.pomodoro.workDuration / 60);
-  const breakMinutes = Math.floor(state.settings.pomodoro.breakDuration / 60);
+  const workMinutes = Math.floor(settings.pomodoro.workDuration / 60);
+  const breakMinutes = Math.floor(settings.pomodoro.breakDuration / 60);
 
   const handleWorkDurationChange = async (value: number | null) => {
     if (value === null) return;
     const seconds = value * 60;
-    await updateSettings({
+    const newSettings = {
+      ...settings,
       pomodoro: {
-        ...state.settings.pomodoro,
+        ...settings.pomodoro,
         workDuration: seconds,
       },
-    });
-    dispatch({
-      type: "SET_SETTINGS",
-      payload: {
-        ...state.settings,
-        pomodoro: {
-          ...state.settings.pomodoro,
-          workDuration: seconds,
-        },
-      },
-    });
+    };
+    await updateSettings({ pomodoro: newSettings.pomodoro });
+    setSettings(newSettings);
   };
 
   const handleBreakDurationChange = async (value: number | null) => {
     if (value === null) return;
     const seconds = value * 60;
-    await updateSettings({
+    const newSettings = {
+      ...settings,
       pomodoro: {
-        ...state.settings.pomodoro,
+        ...settings.pomodoro,
         breakDuration: seconds,
       },
-    });
-    dispatch({
-      type: "SET_SETTINGS",
-      payload: {
-        ...state.settings,
-        pomodoro: {
-          ...state.settings.pomodoro,
-          breakDuration: seconds,
-        },
-      },
-    });
+    };
+    await updateSettings({ pomodoro: newSettings.pomodoro });
+    setSettings(newSettings);
   };
 
   const handleSoundToggle = async (checked: boolean) => {
-    await updateSettings({
+    const newSettings = {
+      ...settings,
       pomodoro: {
-        ...state.settings.pomodoro,
+        ...settings.pomodoro,
         soundEnabled: checked,
       },
-    });
-    dispatch({
-      type: "SET_SETTINGS",
-      payload: {
-        ...state.settings,
-        pomodoro: {
-          ...state.settings.pomodoro,
-          soundEnabled: checked,
-        },
-      },
-    });
+    };
+    await updateSettings({ pomodoro: newSettings.pomodoro });
+    setSettings(newSettings);
   };
 
   const handleAutoStartBreakToggle = async (checked: boolean) => {
-    await updateSettings({
+    const newSettings = {
+      ...settings,
       pomodoro: {
-        ...state.settings.pomodoro,
+        ...settings.pomodoro,
         autoStartBreak: checked,
       },
-    });
-    dispatch({
-      type: "SET_SETTINGS",
-      payload: {
-        ...state.settings,
-        pomodoro: {
-          ...state.settings.pomodoro,
-          autoStartBreak: checked,
-        },
-      },
-    });
+    };
+    await updateSettings({ pomodoro: newSettings.pomodoro });
+    setSettings(newSettings);
   };
 
   const isActive = pomodoro.state === "work" || pomodoro.state === "break";
@@ -103,8 +74,8 @@ export function PomodoroPanel() {
   // Calculate progress percentage
   const totalDuration =
     pomodoro.state === "work" || pomodoro.state === "work-paused"
-      ? state.settings.pomodoro.workDuration
-      : state.settings.pomodoro.breakDuration;
+      ? settings.pomodoro.workDuration
+      : settings.pomodoro.breakDuration;
   const progressPercent = ((totalDuration - pomodoro.remainingSeconds) / totalDuration) * 100;
 
   return (
@@ -175,11 +146,11 @@ export function PomodoroPanel() {
           <Space orientation="vertical" className="w-full" size="small">
             <div className="flex items-center justify-between">
               <span className="text-sm">Âm thanh thông báo</span>
-              <Switch checked={state.settings.pomodoro.soundEnabled} onChange={handleSoundToggle} />
+              <Switch checked={settings.pomodoro.soundEnabled} onChange={handleSoundToggle} />
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Tự động bắt đầu nghỉ</span>
-              <Switch checked={state.settings.pomodoro.autoStartBreak} onChange={handleAutoStartBreakToggle} />
+              <Switch checked={settings.pomodoro.autoStartBreak} onChange={handleAutoStartBreakToggle} />
             </div>
           </Space>
 
@@ -195,7 +166,6 @@ export function PomodoroPanel() {
             icon={<PlayCircleOutlined />}
             onClick={pomodoro.startWork}
             block
-            size="large"
             className="bg-study-pomodoro hover:bg-orange-600 border-study-pomodoro"
           >
             Bắt đầu Pomodoro

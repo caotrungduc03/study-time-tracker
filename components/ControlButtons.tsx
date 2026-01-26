@@ -30,7 +30,6 @@ export function ControlButtons({
           {!isRunning ? (
             <Button
               type="primary"
-              size="large"
               icon={<PlayCircleOutlined />}
               onClick={onStart}
               disabled={disableStart}
@@ -41,7 +40,6 @@ export function ControlButtons({
           ) : (
             <Button
               danger
-              size="large"
               icon={<PauseCircleOutlined />}
               onClick={onStop}
               disabled={disableStop}
@@ -54,7 +52,7 @@ export function ControlButtons({
 
         {/* Reset button - only show when stopped and there's time to reset */}
         {!isRunning && currentTime > 0 && onReset && (
-          <Button type="default" size="large" icon={<ReloadOutlined />} onClick={onReset} className="w-full">
+          <Button type="default" icon={<ReloadOutlined />} onClick={onReset} className="w-full">
             Reset Timer
           </Button>
         )}
