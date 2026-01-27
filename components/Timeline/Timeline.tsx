@@ -61,11 +61,7 @@ export function Timeline({ sessions, currentSession, onEventClick }: TimelinePro
             {Array.from({ length: TIME_CONSTANTS.TOTAL_SLOTS }).map((_, index) => (
               <div
                 key={index}
-                className="flex-1 border-r border-gray-200 last:border-r-0"
-                style={{
-                  borderRightWidth: index % 60 === 59 ? "2px" : "1px", // Every hour (60 slots for 1-min)
-                  borderColor: index % 60 === 59 ? "#d1d5db" : "#e5e7eb",
-                }}
+                className={`flex-1 last:border-r-0 ${index % 60 === 59 ? "border-r-2 border-gray-300" : "border-r border-gray-200"}`}
               />
             ))}
           </div>

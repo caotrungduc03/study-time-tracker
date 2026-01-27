@@ -7,9 +7,11 @@ import { createSession, completeSession, deleteSession } from "@/lib/db/operatio
 import type { StudySession } from "@/types";
 
 export function useTimer() {
-  const { isRunning, currentTime, currentSession, setRunning, setCurrentTime, setCurrentSession } = useTimerStore();
+  const { isRunning, isPaused, currentTime, currentSession, setRunning, setPaused, setCurrentTime, setCurrentSession } =
+    useTimerStore();
   const settings = useSettingsStore((state) => state.settings);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pauseTimestampRef = useRef<number>(0); // Store timestamp when paused
   const startTimeRef = useRef<number>(0);
   const driftCheckRef = useRef<number>(0);
 
@@ -50,6 +52,7 @@ export function useTimer() {
         // Update state
         setCurrentSession(session);
         setCurrentTime(0);
+        setPaused(false);
         setRunning(true);
 
         return session;
@@ -58,7 +61,7 @@ export function useTimer() {
         throw error;
       }
     },
-    [playButtonSound, setRunning, setCurrentTime, setCurrentSession],
+    [playButtonSound, setRunning, setPaused, setCurrentTime, setCurrentSession],
   );
 
   /**
@@ -80,7 +83,6 @@ export function useTimer() {
 
       if (duration < MIN_SESSION_DURATION) {
         // Session too short, delete it instead of saving
-        console.log(`Session too short (${duration}s), deleting instead of saving`);
         await deleteSession(currentSession.id);
       } else {
         // Complete session in database
@@ -95,13 +97,14 @@ export function useTimer() {
 
       // Update state
       setRunning(false);
+      setPaused(false);
       setCurrentSession(null);
       setCurrentTime(0);
     } catch (error) {
       console.error("Failed to stop timer:", error);
       throw error;
     }
-  }, [currentSession, setRunning, setCurrentSession, setCurrentTime]);
+  }, [currentSession, setRunning, setPaused, setCurrentSession, setCurrentTime]);
 
   /**
    * Resume a session (for recovery after page reload)
@@ -117,9 +120,10 @@ export function useTimer() {
 
       setCurrentSession(session);
       setCurrentTime(elapsed);
+      setPaused(false);
       setRunning(true);
     },
-    [setRunning, setCurrentTime, setCurrentSession],
+    [setRunning, setPaused, setCurrentTime, setCurrentSession],
   );
 
   /**
@@ -141,19 +145,58 @@ export function useTimer() {
 
       // Reset state (but keep currentTime so user can see it before manual reset)
       setRunning(false);
+      setPaused(false);
       setCurrentSession(null);
       // Note: NOT resetting currentTime here - only handleReset does that
     } catch (error) {
       console.error("Failed to cancel session:", error);
       throw error;
     }
-  }, [currentSession, setRunning, setCurrentSession]);
+  }, [currentSession, setRunning, setPaused, setCurrentSession]);
+
+  /**
+   * Pause the timer
+   */
+  const pause = useCallback(() => {
+    if (isRunning && !isPaused) {
+      // Save timestamp when pausing
+      pauseTimestampRef.current = Date.now();
+      setPaused(true);
+    }
+  }, [isRunning, isPaused, setPaused]);
+
+  /**
+   * Resume the timer
+   */
+  const resumeTimer = useCallback(() => {
+    if (isRunning && isPaused && currentSession) {
+      // Calculate how long we were paused
+      const pauseDuration = Date.now() - pauseTimestampRef.current;
+
+      // Adjust session start time by adding the pause duration
+      // This way the timer continues from where it was paused
+      const session = currentSession;
+      const originalStartTime = new Date(session.startTime).getTime();
+      const newStartTime = originalStartTime + pauseDuration;
+
+      // Update session with new start time
+      const updatedSession = {
+        ...session,
+        startTime: new Date(newStartTime).toISOString(),
+      };
+
+      // Update pause state first (this will allow interval to start)
+      setPaused(false);
+      // Then update session
+      setCurrentSession(updatedSession);
+    }
+  }, [isRunning, isPaused, currentSession, setCurrentSession, setPaused]);
 
   /**
    * Timer tick effect
    */
   useEffect(() => {
-    if (isRunning) {
+    if (isRunning && !isPaused) {
       intervalRef.current = setInterval(() => {
         // Use global session start time (from State) as the single source of truth
         // This fixes issues where different hook instances have unsynced startTimeRef
@@ -171,6 +214,7 @@ export function useTimer() {
           return;
         }
 
+        // Calculate elapsed time
         const elapsed = Math.floor((Date.now() - startTime) / 1000);
 
         // Safety check: elapsed should be reasonable
@@ -197,15 +241,18 @@ export function useTimer() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRunning, currentSession, setCurrentTime]);
+  }, [isRunning, isPaused, currentSession, setCurrentTime]);
 
   return {
     isRunning,
+    isPaused,
     currentTime,
     currentSession,
     start,
     stop,
+    pause,
     resume,
+    resumeTimer,
     cancel,
   };
 }

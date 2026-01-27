@@ -29,10 +29,7 @@ export function TimerDisplay({ seconds, size = "large" }: TimerDisplayProps) {
         </div>
       )}
       <div
-        className={`font-mono font-bold ${fontSize} tracking-wider ${isValid ? "text-study-active" : "text-red-500"} transition-all duration-300`}
-        style={{
-          textShadow: isValid ? "0 2px 10px rgba(24, 144, 255, 0.3)" : "0 2px 10px rgba(255, 77, 79, 0.3)",
-        }}
+        className={`font-mono font-bold ${fontSize} tracking-wider ${isValid ? "text-study-active drop-shadow-md" : "text-red-500 drop-shadow-md"} transition-all duration-300`}
       >
         {timeString}
       </div>

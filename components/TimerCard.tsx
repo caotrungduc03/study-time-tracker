@@ -9,9 +9,12 @@ import type { StudySession } from "@/types";
 interface TimerCardProps {
   currentTime: number;
   isRunning: boolean;
+  isPaused?: boolean;
   sessionType?: StudySession["type"];
   pomodoroActive?: boolean;
   onStart: () => void;
+  onPause?: () => void;
+  onResume?: () => void;
   onStop: () => void;
   onReset?: () => void;
 }
@@ -19,9 +22,12 @@ interface TimerCardProps {
 export function TimerCard({
   currentTime,
   isRunning,
+  isPaused = false,
   sessionType,
   pomodoroActive = false,
   onStart,
+  onPause,
+  onResume,
   onStop,
   onReset,
 }: TimerCardProps) {
@@ -49,8 +55,11 @@ export function TimerCard({
         <TimerDisplay seconds={currentTime} />
         <ControlButtons
           isRunning={isRunning}
+          isPaused={isPaused}
           currentTime={currentTime}
           onStart={onStart}
+          onPause={onPause}
+          onResume={onResume}
           onStop={onStop}
           onReset={onReset}
           disableStart={pomodoroActive}

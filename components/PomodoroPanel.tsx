@@ -159,13 +159,12 @@ export function PomodoroPanel() {
       )}
 
       {/* Control Buttons */}
-      <Space orientation="vertical" className="w-full" size="small">
+      <div className="flex items-center justify-center gap-2">
         {isIdle && (
           <Button
             type="primary"
             icon={<PlayCircleOutlined />}
             onClick={pomodoro.startWork}
-            block
             className="bg-study-pomodoro hover:bg-orange-600 border-study-pomodoro"
           >
             Bắt đầu Pomodoro
@@ -174,15 +173,15 @@ export function PomodoroPanel() {
 
         {isActive && (
           <>
-            <Button icon={<PauseOutlined />} onClick={pomodoro.pause} block>
+            <Button icon={<PauseOutlined />} onClick={pomodoro.pause}>
               Tạm dừng
             </Button>
             {pomodoro.state === "break" && (
-              <Button icon={<FastForwardOutlined />} onClick={pomodoro.skipBreak} block>
+              <Button icon={<FastForwardOutlined />} onClick={pomodoro.skipBreak}>
                 Bỏ qua nghỉ ngơi
               </Button>
             )}
-            <Button danger icon={<CloseCircleOutlined />} onClick={pomodoro.cancel} block>
+            <Button danger icon={<CloseCircleOutlined />} onClick={pomodoro.cancel}>
               Hủy bỏ
             </Button>
           </>
@@ -190,15 +189,15 @@ export function PomodoroPanel() {
 
         {isPaused && (
           <>
-            <Button type="primary" icon={<PlayCircleOutlined />} onClick={pomodoro.resume} block>
+            <Button type="primary" icon={<PlayCircleOutlined />} onClick={pomodoro.resume}>
               Tiếp tục
             </Button>
-            <Button danger icon={<CloseCircleOutlined />} onClick={pomodoro.cancel} block>
+            <Button danger icon={<CloseCircleOutlined />} onClick={pomodoro.cancel}>
               Hủy bỏ
             </Button>
           </>
         )}
-      </Space>
+      </div>
     </Card>
   );
 }

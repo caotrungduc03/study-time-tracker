@@ -53,20 +53,6 @@ export function usePomodoro() {
   }, [settings.pomodoro.soundEnabled]);
 
   /**
-   * Show browser notification
-   */
-  const showNotification = useCallback(
-    (title: string, body: string) => {
-      if (!settings.notifications.pomodoroEnd) return;
-
-      if ("Notification" in window && Notification.permission === "granted") {
-        new Notification(title, { body, icon: "/icon.png" });
-      }
-    },
-    [settings.notifications.pomodoroEnd],
-  );
-
-  /**
    * Start Pomodoro work session
    */
   const startWork = useCallback(async () => {
@@ -107,10 +93,12 @@ export function usePomodoro() {
   const pause = useCallback(() => {
     if (pomodoroState === "work") {
       setPomodoroState("work-paused");
+      timer.pause();
     } else if (pomodoroState === "break") {
       setPomodoroState("break-paused");
+      timer.pause();
     }
-  }, [pomodoroState, setPomodoroState]);
+  }, [pomodoroState, setPomodoroState, timer]);
 
   /**
    * Resume Pomodoro
@@ -118,10 +106,12 @@ export function usePomodoro() {
   const resumePomodoro = useCallback(() => {
     if (pomodoroState === "work-paused") {
       setPomodoroState("work");
+      timer.resumeTimer();
     } else if (pomodoroState === "break-paused") {
       setPomodoroState("break");
+      timer.resumeTimer();
     }
-  }, [pomodoroState, setPomodoroState]);
+  }, [pomodoroState, setPomodoroState, timer]);
 
   /**
    * Skip break and start new work session
@@ -149,9 +139,8 @@ export function usePomodoro() {
     await timer.stop();
 
     if (pomodoroState === "work") {
-      // Work completed, show notification
+      // Work completed
       playSound();
-      showNotification("Pomodoro hoàn thành!", "Bạn đã hoàn thành 25 phút học tập. Giờ nghỉ ngơi!");
 
       incrementPomodoroCycle();
 
@@ -164,7 +153,6 @@ export function usePomodoro() {
     } else if (pomodoroState === "break") {
       // Break completed
       playSound();
-      showNotification("Giờ nghỉ kết thúc!", "Sẵn sàng cho chu kỳ Pomodoro tiếp theo?");
 
       setPomodoroState("idle");
     }
@@ -172,7 +160,6 @@ export function usePomodoro() {
     pomodoroState,
     timer,
     playSound,
-    showNotification,
     settings.pomodoro.autoStartBreak,
     startBreak,
     incrementPomodoroCycle,
@@ -213,13 +200,25 @@ export function usePomodoro() {
   ]);
 
   /**
-   * Request notification permission on mount
+   * Sync pause state: when timer is paused/resumed, sync pomodoro state
    */
   useEffect(() => {
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
+    if (timer.isPaused && (pomodoroState === "work" || pomodoroState === "break")) {
+      // Timer was paused from outside, pause pomodoro too
+      if (pomodoroState === "work") {
+        setPomodoroState("work-paused");
+      } else if (pomodoroState === "break") {
+        setPomodoroState("break-paused");
+      }
+    } else if (!timer.isPaused && (pomodoroState === "work-paused" || pomodoroState === "break-paused")) {
+      // Timer was resumed from outside, resume pomodoro too
+      if (pomodoroState === "work-paused") {
+        setPomodoroState("work");
+      } else if (pomodoroState === "break-paused") {
+        setPomodoroState("break");
+      }
     }
-  }, []);
+  }, [timer.isPaused, pomodoroState, setPomodoroState]);
 
   return {
     state: pomodoroState,

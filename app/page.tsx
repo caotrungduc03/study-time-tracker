@@ -6,10 +6,8 @@ import { InfoCircleOutlined } from "@ant-design/icons";
 import { TimerCard } from "@/components/TimerCard";
 import { Timeline } from "@/components/Timeline/Timeline";
 import { PomodoroPanel } from "@/components/PomodoroPanel";
-import { RecoveryModal } from "@/components/Modals/RecoveryModal";
 import { useTimer } from "@/hooks/useTimer";
 import { usePomodoro } from "@/hooks/usePomodoro";
-import { useSessionRecovery } from "@/hooks/useSessionRecovery";
 import { useAppInitialization } from "@/hooks/useAppInitialization";
 import { usePomodoroStore } from "@/store/usePomodoroStore";
 import { useTimerStore } from "@/store/useTimerStore";
@@ -18,10 +16,9 @@ import { cleanupInvalidSessions } from "@/lib/db/operations";
 
 export default function Home() {
   const pomodoroState = usePomodoroStore((state) => state.state);
-  const { setRunning, setCurrentTime, setCurrentSession } = useTimerStore();
+  const { setRunning, setPaused, setCurrentTime, setCurrentSession } = useTimerStore();
   const timer = useTimer();
   const pomodoroHook = usePomodoro();
-  const recovery = useSessionRecovery();
   const { sessions, todayStats, refreshData } = useAppInitialization();
 
   const handleStart = async () => {
@@ -58,13 +55,13 @@ export default function Home() {
       // Force reset timer state
       setCurrentTime(0);
       setRunning(false);
+      setPaused(false);
       setCurrentSession(null);
 
       // Cleanup any invalid sessions
       const deletedCount = await cleanupInvalidSessions();
 
       if (deletedCount > 0) {
-        console.log(`Reset: Cleaned up ${deletedCount} corrupted sessions`);
         // Reload data after cleanup
         await refreshData();
       }
@@ -73,15 +70,42 @@ export default function Home() {
     }
   };
 
+  const handlePause = () => {
+    try {
+      // Check if Pomodoro is active
+      const isPomodoroActive = pomodoroState === "work" || pomodoroState === "break";
+
+      if (isPomodoroActive) {
+        // If Pomodoro is active, pause via Pomodoro hook
+        pomodoroHook.pause();
+      } else {
+        // Otherwise just pause the regular timer
+        timer.pause();
+      }
+    } catch (error) {
+      console.error("Failed to pause timer:", error);
+    }
+  };
+
+  const handleResume = () => {
+    try {
+      // Check if Pomodoro is paused
+      const isPomodoroActive = pomodoroState === "work-paused" || pomodoroState === "break-paused";
+
+      if (isPomodoroActive) {
+        // If Pomodoro is paused, resume via Pomodoro hook
+        pomodoroHook.resume();
+      } else {
+        // Otherwise just resume the regular timer
+        timer.resumeTimer();
+      }
+    } catch (error) {
+      console.error("Failed to resume timer:", error);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
-      {/* Recovery Modal */}
-      <RecoveryModal
-        open={recovery.showRecoveryModal}
-        session={recovery.unfinishedSession}
-        onClose={recovery.clearSession}
-      />
-
       {/* Timer and Pomodoro Row */}
       <Row gutter={[16, 16]}>
         {/* Pomodoro Panel */}
@@ -94,9 +118,12 @@ export default function Home() {
           <TimerCard
             currentTime={timer.currentTime}
             isRunning={timer.isRunning}
+            isPaused={timer.isPaused}
             sessionType={timer.currentSession?.type}
             pomodoroActive={pomodoroState !== "idle" && pomodoroState !== "completed"}
             onStart={handleStart}
+            onPause={handlePause}
+            onResume={handleResume}
             onStop={handleStop}
             onReset={handleReset}
           />
@@ -111,7 +138,7 @@ export default function Home() {
               <Statistic
                 title="Tổng thời gian hôm nay"
                 value={formatDuration(todayStats.totalSeconds)}
-                styles={{ content: { color: "#3f8600" } }}
+                className="text-green-700"
               />
             </Col>
             <Col xs={24} sm={8}>
@@ -120,7 +147,7 @@ export default function Home() {
                   <span className="flex items-center gap-1">
                     Số phiên học
                     <Tooltip title="Chỉ tính các phiên học >= 1 phút. Phiên < 1 phút sẽ bị bỏ qua.">
-                      <InfoCircleOutlined className="text-gray-400 cursor-help" style={{ fontSize: "14px" }} />
+                      <InfoCircleOutlined className="text-gray-400 cursor-help text-sm" />
                     </Tooltip>
                   </span>
                 }

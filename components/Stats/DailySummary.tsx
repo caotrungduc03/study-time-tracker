@@ -28,29 +28,32 @@ export function DailySummary({ stats, dailyGoal = 14400 }: DailySummaryProps) {
       {/* Main Stats */}
       <Row gutter={[16, 16]} className="mb-6">
         <Col xs={24} sm={8}>
-          <Statistic
-            title="Tổng thời gian"
-            value={formatDuration(stats.totalSeconds)}
-            prefix={<ClockCircleOutlined />}
-            styles={{ content: { color: "#3f8600", fontSize: "28px" } }}
-          />
+          <div className="text-green-700 text-2xl font-bold">
+            <Statistic
+              title="Tổng thời gian"
+              value={formatDuration(stats.totalSeconds)}
+              prefix={<ClockCircleOutlined />}
+            />
+          </div>
         </Col>
         <Col xs={24} sm={8}>
-          <Statistic
-            title="Số phiên học"
-            value={stats.sessionCount}
-            suffix="phiên"
-            prefix={<CheckCircleOutlined />}
-            styles={{ content: { fontSize: "28px" } }}
-          />
+          <div className="text-2xl font-bold">
+            <Statistic
+              title="Số phiên học"
+              value={stats.sessionCount}
+              suffix="phiên"
+              prefix={<CheckCircleOutlined />}
+            />
+          </div>
         </Col>
         <Col xs={24} sm={8}>
-          <Statistic
-            title="Trung bình/phiên"
-            value={formatDuration(stats.averageSessionDuration)}
-            prefix={<TrophyOutlined />}
-            styles={{ content: { fontSize: "28px" } }}
-          />
+          <div className="text-2xl font-bold">
+            <Statistic
+              title="Trung bình/phiên"
+              value={formatDuration(stats.averageSessionDuration)}
+              prefix={<TrophyOutlined />}
+            />
+          </div>
         </Col>
       </Row>
 

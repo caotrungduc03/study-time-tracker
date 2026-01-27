@@ -163,7 +163,6 @@ export async function cleanupInvalidSessions(): Promise<number> {
     }
   }
 
-  console.log(`Cleaned up ${deletedCount} invalid sessions`);
   return deletedCount;
 }
 

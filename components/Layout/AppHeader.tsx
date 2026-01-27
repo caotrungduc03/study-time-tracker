@@ -24,8 +24,6 @@ export function AppHeader() {
   const router = useRouter();
   const pathname = usePathname();
 
-  console.log("Current pathname:", pathname);
-
   return (
     <AntHeader className="!bg-white shadow-sm !h-16">
       <div className="container mx-auto px-4 flex items-center justify-between h-full">

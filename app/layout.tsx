@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: "Study Time Tracker - Theo dõi thời gian học tập",
   description: "Ứng dụng web đơn giản theo dõi thời gian học tập với Pomodoro và thống kê chi tiết",
   icons: {
-    icon: "/logo-icon.png",
+    icon: "/images/logo-icon.png",
   },
 };
 

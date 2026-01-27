@@ -52,7 +52,6 @@ export async function initializeDatabase(): Promise<void> {
       };
 
       await db.settings.add(defaultSettings);
-      console.log("Database initialized with default settings");
     }
   } catch (error) {
     console.error("Failed to initialize database:", error);

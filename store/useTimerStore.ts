@@ -4,12 +4,14 @@ import type { StudySession } from "@/types";
 
 interface TimerState {
   isRunning: boolean;
+  isPaused: boolean;
   currentTime: number; // seconds elapsed
   currentSession: StudySession | null;
 }
 
 interface TimerActions {
   setRunning: (isRunning: boolean) => void;
+  setPaused: (isPaused: boolean) => void;
   setCurrentTime: (time: number) => void;
   setCurrentSession: (session: StudySession | null) => void;
   resetTimer: () => void;
@@ -19,6 +21,7 @@ export type TimerStore = TimerState & TimerActions;
 
 const initialState: TimerState = {
   isRunning: false,
+  isPaused: false,
   currentTime: 0,
   currentSession: null,
 };
@@ -29,6 +32,8 @@ export const useTimerStore = create<TimerStore>()(
       ...initialState,
 
       setRunning: (isRunning) => set({ isRunning }),
+
+      setPaused: (isPaused) => set({ isPaused }),
 
       setCurrentTime: (currentTime) => set({ currentTime }),
 

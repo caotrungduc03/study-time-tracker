@@ -69,33 +69,28 @@ export function MonthlyOverview({ stats }: MonthlyOverviewProps) {
       {/* Summary Stats */}
       <Row gutter={[16, 16]} className="mb-6">
         <Col xs={12} sm={6}>
-          <Statistic
-            title="Tổng thời gian"
-            value={formatDuration(monthTotal)}
-            styles={{ content: { color: "#1890ff", fontSize: "20px" } }}
-          />
+          <div className="text-blue-500 text-xl font-semibold">
+            <Statistic title="Tổng thời gian" value={formatDuration(monthTotal)} />
+          </div>
         </Col>
         <Col xs={12} sm={6}>
-          <Statistic
-            title="Ngày đã học"
-            value={daysStudied}
-            suffix={`/ ${new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate()}`}
-            styles={{ content: { fontSize: "20px" } }}
-          />
+          <div className="text-xl font-semibold">
+            <Statistic
+              title="Ngày đã học"
+              value={daysStudied}
+              suffix={`/ ${new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate()}`}
+            />
+          </div>
         </Col>
         <Col xs={12} sm={6}>
-          <Statistic
-            title="Trung bình/ngày"
-            value={formatDuration(Math.floor(averagePerDay))}
-            styles={{ content: { fontSize: "20px" } }}
-          />
-        </Col>
-        <Col xs={12} sm={6}>
-          <Statistic
-            title="Ngày học nhiều nhất"
-            value={bestDay ? formatDuration(bestDay.totalSeconds) : "0s"}
-            styles={{ content: { color: "#52c41a", fontSize: "20px" } }}
-          />
+          <div className="text-xl font-semibold">
+            <Statistic title="Trung bình/ngày" value={formatDuration(Math.floor(averagePerDay))} />
+          </div>
+          <Col xs={12} sm={6}>
+            <div className="text-green-600 text-xl font-semibold">
+              <Statistic title="Ngày học nhiều nhất" value={bestDay ? formatDuration(bestDay.totalSeconds) : "0s"} />
+            </div>
+          </Col>
         </Col>
       </Row>
 
