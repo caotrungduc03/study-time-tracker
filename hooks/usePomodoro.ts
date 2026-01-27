@@ -6,23 +6,28 @@ import { useSettingsStore } from "@/store/useSettingsStore";
 import { useTimer } from "./useTimer";
 
 export function usePomodoro() {
-  const {
-    state: pomodoroState,
-    remainingSeconds,
-    cycleCount,
-    setPomodoroState,
-    setPomodoroRemaining,
-    incrementPomodoroCycle,
-    resetPomodoro,
-  } = usePomodoroStore();
-  const settings = useSettingsStore((state) => state.settings);
+  // Use selectors to subscribe only to needed state
+  const pomodoroState = usePomodoroStore((state) => state.state);
+  const remainingSeconds = usePomodoroStore((state) => state.remainingSeconds);
+  const cycleCount = usePomodoroStore((state) => state.cycleCount);
+  const setPomodoroState = usePomodoroStore((state) => state.setPomodoroState);
+  const setPomodoroRemaining = usePomodoroStore((state) => state.setPomodoroRemaining);
+  const incrementPomodoroCycle = usePomodoroStore((state) => state.incrementPomodoroCycle);
+  const resetPomodoro = usePomodoroStore((state) => state.resetPomodoro);
+
+  // Settings selector
+  const soundEnabled = useSettingsStore((state) => state.settings.pomodoro.soundEnabled);
+  const workDuration = useSettingsStore((state) => state.settings.pomodoro.workDuration);
+  const breakDuration = useSettingsStore((state) => state.settings.pomodoro.breakDuration);
+  const autoStartBreak = useSettingsStore((state) => state.settings.pomodoro.autoStartBreak);
+
   const timer = useTimer();
 
   /**
    * Play notification sound when timer completes
    */
   const playSound = useCallback(() => {
-    if (!settings.pomodoro.soundEnabled) return;
+    if (!soundEnabled) return;
 
     try {
       const audio = new Audio("/sounds/alarm-kitchen.mp3");
@@ -33,13 +38,13 @@ export function usePomodoro() {
     } catch (error) {
       console.error("Failed to play sound:", error);
     }
-  }, [settings.pomodoro.soundEnabled]);
+  }, [soundEnabled]);
 
   /**
    * Play button click sound
    */
   const playButtonSound = useCallback(() => {
-    if (!settings.pomodoro.soundEnabled) return;
+    if (!soundEnabled) return;
 
     try {
       const audio = new Audio("/sounds/button.wav");
@@ -50,7 +55,7 @@ export function usePomodoro() {
     } catch (error) {
       console.error("Failed to play button sound:", error);
     }
-  }, [settings.pomodoro.soundEnabled]);
+  }, [soundEnabled]);
 
   /**
    * Start Pomodoro work session
@@ -65,11 +70,11 @@ export function usePomodoro() {
 
       // Update Pomodoro state
       setPomodoroState("work");
-      setPomodoroRemaining(settings.pomodoro.workDuration);
+      setPomodoroRemaining(workDuration);
     } catch (error) {
       console.error("Failed to start Pomodoro work:", error);
     }
-  }, [playButtonSound, timer, setPomodoroState, setPomodoroRemaining, settings.pomodoro.workDuration]);
+  }, [playButtonSound, timer, setPomodoroState, setPomodoroRemaining, workDuration]);
 
   /**
    * Start Pomodoro break session
@@ -81,11 +86,11 @@ export function usePomodoro() {
 
       // Update Pomodoro state
       setPomodoroState("break");
-      setPomodoroRemaining(settings.pomodoro.breakDuration);
+      setPomodoroRemaining(breakDuration);
     } catch (error) {
       console.error("Failed to start Pomodoro break:", error);
     }
-  }, [timer, setPomodoroState, setPomodoroRemaining, settings.pomodoro.breakDuration]);
+  }, [timer, setPomodoroState, setPomodoroRemaining, breakDuration]);
 
   /**
    * Pause Pomodoro
@@ -129,8 +134,8 @@ export function usePomodoro() {
    */
   const cancelPomodoro = useCallback(async () => {
     await timer.cancel();
-    resetPomodoro(settings.pomodoro.workDuration);
-  }, [timer, resetPomodoro, settings.pomodoro.workDuration]);
+    resetPomodoro(workDuration);
+  }, [timer, resetPomodoro, workDuration]);
 
   /**
    * Complete current phase and move to next
@@ -145,7 +150,7 @@ export function usePomodoro() {
       incrementPomodoroCycle();
 
       // Auto-start break if enabled
-      if (settings.pomodoro.autoStartBreak) {
+      if (autoStartBreak) {
         await startBreak();
       } else {
         setPomodoroState("completed");
@@ -156,15 +161,7 @@ export function usePomodoro() {
 
       setPomodoroState("idle");
     }
-  }, [
-    pomodoroState,
-    timer,
-    playSound,
-    settings.pomodoro.autoStartBreak,
-    startBreak,
-    incrementPomodoroCycle,
-    setPomodoroState,
-  ]);
+  }, [pomodoroState, timer, playSound, autoStartBreak, startBreak, incrementPomodoroCycle, setPomodoroState]);
 
   /**
    * Sync Pomodoro with Timer (Countdown effect)
@@ -173,7 +170,7 @@ export function usePomodoro() {
   useEffect(() => {
     // Only run if we are in an active work or break phase
     if (pomodoroState === "work" || pomodoroState === "break") {
-      const duration = pomodoroState === "work" ? settings.pomodoro.workDuration : settings.pomodoro.breakDuration;
+      const duration = pomodoroState === "work" ? workDuration : breakDuration;
 
       // Calculate remaining time based on main timer
       // This ensures Pomodoro and Main Timer are always in sync
@@ -193,8 +190,8 @@ export function usePomodoro() {
     timer.currentTime,
     pomodoroState,
     remainingSeconds,
-    settings.pomodoro.workDuration,
-    settings.pomodoro.breakDuration,
+    workDuration,
+    breakDuration,
     setPomodoroRemaining,
     completePhase,
   ]);

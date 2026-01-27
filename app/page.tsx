@@ -5,7 +5,7 @@ import { Statistic, Row, Col, Card, Tooltip } from "antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
 import { TimerCard } from "@/components/TimerCard";
 import { Timeline } from "@/components/Timeline/Timeline";
-import { PomodoroPanel } from "@/components/PomodoroPanel";
+import PomodoroPanel from "@/components/Pomodoro/PomodoroPanel";
 import { useTimer } from "@/hooks/useTimer";
 import { usePomodoro } from "@/hooks/usePomodoro";
 import { useAppInitialization } from "@/hooks/useAppInitialization";
