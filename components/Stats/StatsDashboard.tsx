@@ -1,34 +1,97 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, Button } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
+import { AllTimeStats } from "./AllTimeStats";
 import { DailySummary } from "./DailySummary";
-import { WeeklyChart } from "./WeeklyChart";
 import { MonthlyOverview } from "./MonthlyOverview";
+import { YearlyOverview } from "./YearlyOverview";
 import { useStatistics } from "@/hooks/useStatistics";
-
-type TabKey = "today" | "week" | "month";
+import { getSessionsByDateRange } from "@/lib/db/operations";
+import type { DailyStat } from "@/types";
+import type { TabKey } from "../../types/stats";
+import dayjs from "dayjs";
 
 export function StatsDashboard() {
-  const { todayStats, weekStats, monthStats, loading, refresh } = useStatistics();
-  const [activeTab, setActiveTab] = useState<TabKey>("today");
+  const { weekStats, monthStats, yearStats, loading, refresh } = useStatistics();
+  const [activeTab, setActiveTab] = useState<TabKey>("week");
+  const [allTimeStats, setAllTimeStats] = useState<DailyStat[]>([]);
+
+  // Load all time stats
+  useEffect(() => {
+    const loadAllTimeStats = async () => {
+      try {
+        // Get stats for the entire database
+        const now = dayjs();
+        const startDate = "2020-01-01"; // Start from a past date to get all records
+        const endDate = now.format("YYYY-MM-DD");
+
+        const stats = await getSessionsByDateRange(startDate, endDate);
+        console.log("Loaded sessions:", stats.length, stats.slice(0, 5)); // Debug log
+
+        // Group by date and calculate stats
+        const dailyStats = new Map<string, DailyStat>();
+
+        stats.forEach((session) => {
+          const date = session.startDate!;
+          if (!dailyStats.has(date)) {
+            dailyStats.set(date, {
+              id: date,
+              date,
+              totalSeconds: 0,
+              sessionCount: 0,
+              normalSeconds: 0,
+              pomodoroWorkSeconds: 0,
+              pomodoroBreakSeconds: 0,
+              sessions: [],
+              averageSessionDuration: 0,
+              longestSessionDuration: 0,
+              lastUpdated: new Date().toISOString(),
+            });
+          }
+
+          const stat = dailyStats.get(date)!;
+          stat.totalSeconds += session.duration;
+          stat.sessionCount += 1;
+          stat.sessions.push(session.id);
+
+          if (session.duration > stat.longestSessionDuration) {
+            stat.longestSessionDuration = session.duration;
+          }
+        });
+
+        const result = Array.from(dailyStats.values()).sort((a, b) => a.date.localeCompare(b.date));
+        console.log("Grouped daily stats:", result.length, result.slice(0, 5)); // Debug log
+        setAllTimeStats(result);
+      } catch (error) {
+        console.error("Failed to load all time stats:", error);
+      }
+    };
+
+    loadAllTimeStats();
+  }, []);
 
   const items = [
     {
-      key: "today",
-      label: "Hôm nay",
-      children: <DailySummary stats={todayStats} dailyGoal={14400} />,
-    },
-    {
       key: "week",
-      label: "Tuần này",
-      children: <WeeklyChart stats={weekStats} />,
+      label: "Tuần",
+      children: <DailySummary stats={weekStats} />,
     },
     {
       key: "month",
-      label: "Tháng này",
+      label: "Tháng",
       children: <MonthlyOverview stats={monthStats} />,
+    },
+    {
+      key: "year",
+      label: "Năm",
+      children: <YearlyOverview stats={yearStats} />,
+    },
+    {
+      key: "all-time",
+      label: "Toàn bộ thời gian",
+      children: <AllTimeStats stats={allTimeStats} />,
     },
   ];
 

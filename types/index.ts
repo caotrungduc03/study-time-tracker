@@ -9,7 +9,7 @@ export interface StudySession {
   duration: number; // seconds
 
   // Metadata
-  type: "normal" | "pomodoro-work" | "pomodoro-break";
+  type: "normal" | "pomodoro-work" | "pomodoro-break" | "imported";
   status: "completed" | "cancelled" | "in-progress";
 
   // Optional fields
@@ -22,6 +22,9 @@ export interface StudySession {
 
   // For indexing
   startDate?: string; // YYYY-MM-DD format for date-based queries
+
+  // For imported sessions (when startTime and endTime are not known)
+  isImported?: boolean; // Flag to indicate this is an imported session
 }
 
 // Settings Interface
@@ -177,6 +180,7 @@ export const EVENT_COLORS = {
   normal: "#52c41a", // Green
   "pomodoro-work": "#fa8c16", // Orange
   "pomodoro-break": "#722ed1", // Purple
+  imported: "#13c2c2", // Cyan
   active: "#1890ff", // Blue (currently studying)
 } as const;
 

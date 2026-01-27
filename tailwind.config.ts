@@ -19,6 +19,9 @@ export default {
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
       },
+      spacing: {
+        15: "3.75rem",
+      },
     },
   },
   plugins: [],

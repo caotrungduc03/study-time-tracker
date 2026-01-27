@@ -1,137 +1,127 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { Card, Row, Col, Statistic } from "antd";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Card, Row } from "antd";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import type { DailyStat } from "@/types";
-import { secondsToHours, formatDuration } from "@/lib/time-utils";
+import { CustomTooltip, monthlyChartFormatter } from "./ChartTooltip";
+import { StatsCard } from "./StatsCard";
+import { formatTime } from "@/lib/time-utils";
+import type { MonthlyChartData, MonthDateRange } from "../../types/stats";
+import dayjs from "dayjs";
 
 interface MonthlyOverviewProps {
   stats: DailyStat[];
 }
 
-const CustomTooltip = ({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: { payload: DailyStat & { hours: number; day: number } }[];
-}) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <div className="bg-white p-3 shadow-lg rounded-lg border border-gray-200">
-        <p className="font-semibold mb-1">Ngày {data.day}</p>
-        <p className="text-blue-600 font-semibold">{formatDuration(data.totalSeconds)}</p>
-      </div>
-    );
-  }
-  return null;
-};
-
 export function MonthlyOverview({ stats }: MonthlyOverviewProps) {
+  // Get current month (always show current month, not data month)
+  const monthDateRange = useMemo((): MonthDateRange => {
+    const now = dayjs();
+    return { start: now.year(), end: now.month() };
+  }, []);
+
+  // Fill in missing dates with empty stats
+  const completeStats = useMemo(() => {
+    const startOfMonth = dayjs().year(monthDateRange.start).month(monthDateRange.end).startOf("month");
+    const daysInMonth = startOfMonth.daysInMonth();
+    const monthDates: string[] = [];
+
+    for (let day = 0; day < daysInMonth; day++) {
+      monthDates.push(startOfMonth.add(day, "day").format("YYYY-MM-DD"));
+    }
+
+    const statsMap = new Map(stats.map((s) => [s.date, s]));
+
+    return monthDates.map((date) => {
+      return (
+        statsMap.get(date) || {
+          id: date,
+          date,
+          totalSeconds: 0,
+          sessionCount: 0,
+          normalSeconds: 0,
+          pomodoroWorkSeconds: 0,
+          pomodoroBreakSeconds: 0,
+          sessions: [],
+          averageSessionDuration: 0,
+          longestSessionDuration: 0,
+          lastUpdated: new Date().toISOString(),
+        }
+      );
+    });
+  }, [stats, monthDateRange]);
+
   // Prepare chart data
-  const chartData = useMemo(() => {
-    return stats.map((stat) => {
-      const date = new Date(stat.date);
+  const chartData = useMemo((): MonthlyChartData[] => {
+    return completeStats.map((stat) => {
+      const date = dayjs(stat.date);
       return {
         date: stat.date,
-        day: date.getDate(),
-        hours: secondsToHours(stat.totalSeconds),
+        day: date.date(),
+        hours: Math.round((stat.totalSeconds / 3600) * 100) / 100,
         totalSeconds: stat.totalSeconds,
+        sessionCount: stat.sessionCount,
       };
     });
-  }, [stats]);
+  }, [completeStats]);
 
   // Calculate monthly totals
   const monthTotal = useMemo(() => {
-    return stats.reduce((sum, stat) => sum + stat.totalSeconds, 0);
-  }, [stats]);
+    return completeStats.reduce((sum, stat) => sum + stat.totalSeconds, 0);
+  }, [completeStats]);
 
-  const daysStudied = useMemo(() => {
-    return stats.filter((s) => s.totalSeconds > 0).length;
-  }, [stats]);
-
-  const bestDay = useMemo(() => {
-    if (stats.length === 0) return null;
-    return stats.reduce((best, current) => (current.totalSeconds > best.totalSeconds ? current : best));
-  }, [stats]);
+  const monthSessions = useMemo(() => {
+    return completeStats.reduce((sum, stat) => sum + stat.sessionCount, 0);
+  }, [completeStats]);
 
   const averagePerDay = useMemo(() => {
-    return daysStudied > 0 ? monthTotal / daysStudied : 0;
-  }, [monthTotal, daysStudied]);
+    const daysWithData = completeStats.filter((s) => s.totalSeconds > 0).length;
+    return daysWithData > 0 ? monthTotal / daysWithData : 0;
+  }, [monthTotal, completeStats]);
 
-  const currentMonth =
-    stats.length > 0 ? new Date(stats[0].date).toLocaleDateString("vi-VN", { month: "long", year: "numeric" }) : "";
+  const monthTitle = useMemo(() => {
+    const now = dayjs();
+    const month = now.month() + 1;
+    const daysInMonth = now.daysInMonth();
+    return `1 - ${daysInMonth} (Tháng ${month})`;
+  }, []);
 
   return (
-    <Card title={`📅 Tháng ${currentMonth}`}>
+    <Card title={`📅 ${monthTitle}`}>
       {/* Summary Stats */}
       <Row gutter={[16, 16]} className="mb-6">
-        <Col xs={12} sm={6}>
-          <div className="text-blue-500 text-xl font-semibold">
-            <Statistic title="Tổng thời gian" value={formatDuration(monthTotal)} />
-          </div>
-        </Col>
-        <Col xs={12} sm={6}>
-          <div className="text-xl font-semibold">
-            <Statistic
-              title="Ngày đã học"
-              value={daysStudied}
-              suffix={`/ ${new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate()}`}
-            />
-          </div>
-        </Col>
-        <Col xs={12} sm={6}>
-          <div className="text-xl font-semibold">
-            <Statistic title="Trung bình/ngày" value={formatDuration(Math.floor(averagePerDay))} />
-          </div>
-          <Col xs={12} sm={6}>
-            <div className="text-green-600 text-xl font-semibold">
-              <Statistic title="Ngày học nhiều nhất" value={bestDay ? formatDuration(bestDay.totalSeconds) : "0s"} />
-            </div>
-          </Col>
-        </Col>
+        <StatsCard label="Tổng thời gian" value={formatTime(monthTotal)} color="blue" format="number" />
+        <StatsCard label="Tổng phiên" value={monthSessions} color="green" format="number" />
+        <StatsCard
+          label="Thời gian/ngày"
+          value={formatTime(Math.floor(averagePerDay))}
+          color="purple"
+          format="number"
+        />
       </Row>
 
-      {/* Line Chart */}
-      {chartData.length > 0 && (
-        <ResponsiveContainer width="100%" height={250}>
-          <LineChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+      {/* Bar Chart */}
+      <div className="bg-white rounded-lg p-4">
+        <h3 className="font-semibold mb-4">Chi tiết từng ngày</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis
-              dataKey="day"
-              label={{ value: "Ngày", position: "insideBottom", offset: -5 }}
-              tick={{ fontSize: 11 }}
-            />
-            <YAxis label={{ value: "Giờ", angle: -90, position: "insideLeft" }} tick={{ fontSize: 11 }} />
-            <Tooltip content={<CustomTooltip />} />
-            <Line
-              type="monotone"
-              dataKey="hours"
-              stroke="#1890ff"
-              strokeWidth={2}
-              dot={{ fill: "#1890ff", r: 3 }}
-              activeDot={{ r: 6 }}
-            />
-          </LineChart>
+            <XAxis dataKey="day" tick={{ fontSize: 12 }} interval={Math.floor(chartData.length / 15)} />
+            <YAxis label={{ value: "Giờ", angle: -90, position: "insideLeft" }} tick={{ fontSize: 12 }} />
+            <Tooltip content={<CustomTooltip dataFormatter={monthlyChartFormatter} />} />
+            <Bar dataKey="hours" radius={[8, 8, 0, 0]}>
+              {chartData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={entry.totalSeconds > 0 ? "#1890ff" : "#e6e6e6"}
+                  opacity={entry.totalSeconds > 0 ? 1 : 0.5}
+                />
+              ))}
+            </Bar>
+          </BarChart>
         </ResponsiveContainer>
-      )}
-
-      {/* Best Day Info */}
-      {bestDay && bestDay.totalSeconds > 0 && (
-        <div className="mt-4 pt-4 border-t">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Ngày học hiệu quả nhất:</span>
-            <span className="font-semibold">
-              {new Date(bestDay.date).toLocaleDateString("vi-VN", {
-                day: "numeric",
-                month: "long",
-              })}
-            </span>
-          </div>
-        </div>
-      )}
+      </div>
     </Card>
   );
 }

@@ -1,11 +1,9 @@
 import Dexie, { Table } from "dexie";
-import type { StudySession, AppSettings, DailyStat, WeeklyStat } from "@/types";
+import type { StudySession, AppSettings } from "@/types";
 
 export class StudyTrackerDB extends Dexie {
   sessions!: Table<StudySession, string>;
   settings!: Table<AppSettings, string>;
-  dailyStats!: Table<DailyStat, string>;
-  weeklyStats!: Table<WeeklyStat, string>;
 
   constructor() {
     super("study-tracker-db");
@@ -13,8 +11,6 @@ export class StudyTrackerDB extends Dexie {
     this.version(1).stores({
       sessions: "id, startTime, type, startDate, status",
       settings: "id",
-      dailyStats: "id, date",
-      weeklyStats: "id, weekNumber, year",
     });
   }
 }

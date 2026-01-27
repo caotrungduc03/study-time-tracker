@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
-import { Layout, Button } from "antd";
-import { ArrowLeftOutlined, BarChartOutlined } from "@ant-design/icons";
+import React, { useState } from "react";
+import { Layout, Button, Space } from "antd";
+import { ArrowLeftOutlined, BarChartOutlined, ImportOutlined } from "@ant-design/icons";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import { ROUTES } from "@/constants";
+import ImportModal from "@/components/ImportModal";
 
 const { Header: AntHeader } = Layout;
 
@@ -23,33 +24,53 @@ function isCurrentRoute(pathname: string, route: string, exact: boolean = true):
 export function AppHeader() {
   const router = useRouter();
   const pathname = usePathname();
+  const [importModalOpen, setImportModalOpen] = useState(false);
+
+  const handleImportSuccess = () => {
+    // Reload the page to refresh data
+    window.location.reload();
+  };
 
   return (
-    <AntHeader className="!bg-white shadow-sm !h-16">
-      <div className="container mx-auto px-4 flex items-center justify-between h-full">
-        <div className="flex items-center cursor-pointer" onClick={() => router.push(ROUTES.HOME)}>
-          <Image
-            src="/images/logo.png"
-            alt="Study Time Tracker Logo"
-            width={200}
-            height={60}
-            className="rounded-lg w-auto"
-            priority
-          />
-        </div>
+    <>
+      <AntHeader className="!bg-white shadow-sm !h-16">
+        <div className="container mx-auto px-4 flex items-center justify-between h-full">
+          <div className="flex items-center cursor-pointer" onClick={() => router.push(ROUTES.HOME)}>
+            <Image
+              src="/images/logo.png"
+              alt="Study Time Tracker Logo"
+              width={200}
+              height={60}
+              className="w-15 object-cover object-left rounded-lg sm:w-auto"
+              priority
+            />
+          </div>
 
-        {/* Navigation Button - changes based on route */}
-        {isCurrentRoute(pathname, ROUTES.HOME) && (
-          <Button type="primary" icon={<BarChartOutlined />} onClick={() => router.push(ROUTES.STATS)}>
-            Thống kê
-          </Button>
-        )}
-        {isCurrentRoute(pathname, ROUTES.STATS) && (
-          <Button type="primary" icon={<ArrowLeftOutlined />} onClick={() => router.push(ROUTES.HOME)}>
-            Quay lại
-          </Button>
-        )}
-      </div>
-    </AntHeader>
+          {/* Navigation Buttons - changes based on route */}
+          {isCurrentRoute(pathname, ROUTES.HOME) && (
+            <Space>
+              <Button icon={<ImportOutlined />} onClick={() => setImportModalOpen(true)}>
+                Import
+              </Button>
+              <Button type="primary" icon={<BarChartOutlined />} onClick={() => router.push(ROUTES.STATS)}>
+                Thống kê
+              </Button>
+            </Space>
+          )}
+          {isCurrentRoute(pathname, ROUTES.STATS) && (
+            <Space>
+              <Button icon={<ImportOutlined />} onClick={() => setImportModalOpen(true)}>
+                Import
+              </Button>
+              <Button type="primary" icon={<ArrowLeftOutlined />} onClick={() => router.push(ROUTES.HOME)}>
+                Quay lại
+              </Button>
+            </Space>
+          )}
+        </div>
+      </AntHeader>
+
+      <ImportModal open={importModalOpen} onClose={() => setImportModalOpen(false)} onSuccess={handleImportSuccess} />
+    </>
   );
 }

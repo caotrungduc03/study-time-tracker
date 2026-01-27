@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { getTodayStats, getStatsForDateRange } from "@/lib/db/operations";
-import { getCurrentWeekDates, getMonthDates } from "@/lib/time-utils";
+import { getCurrentWeekDates, getMonthDates, getYearDates } from "@/lib/time-utils";
 import type { DailyStat } from "@/types";
 
 export function useStatistics() {
   const [todayStats, setTodayStats] = useState<DailyStat | null>(null);
   const [weekStats, setWeekStats] = useState<DailyStat[]>([]);
   const [monthStats, setMonthStats] = useState<DailyStat[]>([]);
+  const [yearStats, setYearStats] = useState<DailyStat[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Load today's statistics
@@ -77,22 +78,42 @@ export function useStatistics() {
     }
   }, []);
 
+  // Load year statistics
+  const loadYearStats = useCallback(async () => {
+    try {
+      setLoading(true);
+      const now = new Date();
+      const yearDates = getYearDates(now.getFullYear());
+      const startDate = yearDates[0];
+      const endDate = yearDates[yearDates.length - 1];
+
+      const stats = await getStatsForDateRange(startDate, endDate);
+      setYearStats(stats);
+    } catch (error) {
+      console.error("Failed to load year stats:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Initial load
   useEffect(() => {
     loadTodayStats();
     loadWeekStats();
     loadMonthStats();
-  }, [loadTodayStats, loadWeekStats, loadMonthStats]);
+    loadYearStats();
+  }, [loadTodayStats, loadWeekStats, loadMonthStats, loadYearStats]);
 
   // Refresh function
   const refresh = useCallback(async () => {
-    await Promise.all([loadTodayStats(), loadWeekStats(), loadMonthStats()]);
-  }, [loadTodayStats, loadWeekStats, loadMonthStats]);
+    await Promise.all([loadTodayStats(), loadWeekStats(), loadMonthStats(), loadYearStats()]);
+  }, [loadTodayStats, loadWeekStats, loadMonthStats, loadYearStats]);
 
   return {
     todayStats,
     weekStats,
     monthStats,
+    yearStats,
     loading,
     refresh,
   };

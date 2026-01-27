@@ -2,3 +2,7 @@
 
 @tailwind components;
 @tailwind utilities;
+
+.recharts-responsive-container .recharts-surface {
+  @apply outline-none;
+}

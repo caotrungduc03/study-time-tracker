@@ -1,118 +1,104 @@
 "use client";
 
-import React from "react";
-import { Card, Row, Col, Statistic, Progress } from "antd";
-import { ClockCircleOutlined, CheckCircleOutlined, TrophyOutlined } from "@ant-design/icons";
+import React, { useMemo } from "react";
+import { Card, Row } from "antd";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import type { DailyStat } from "@/types";
-import { formatDuration } from "@/lib/time-utils";
+import { CustomTooltip, dailyChartFormatter } from "./ChartTooltip";
+import { StatsCard } from "./StatsCard";
+import { formatTime } from "@/lib/time-utils";
+import type { DailyChartData } from "../../types/stats";
+import dayjs from "dayjs";
 
 interface DailySummaryProps {
-  stats: DailyStat | null;
-  dailyGoal?: number; // in seconds
+  stats: DailyStat[];
 }
 
-export function DailySummary({ stats, dailyGoal = 14400 }: DailySummaryProps) {
-  if (!stats) {
+export function DailySummary({ stats }: DailySummaryProps) {
+  // Get week date range
+  const weekDateRange = useMemo(() => {
+    if (stats.length === 0) return "";
+    const firstDate = dayjs(stats[0].date);
+    const lastDate = dayjs(stats[stats.length - 1].date);
+    const firstDay = firstDate.format("DD/MM");
+    const lastDay = lastDate.format("DD/MM");
+    return `${firstDay} - ${lastDay}`;
+  }, [stats]);
+
+  // Prepare chart data - last 7 days (Monday to Sunday)
+  const chartData = useMemo((): DailyChartData[] => {
+    const last7Days = stats.slice(-7);
+    return last7Days.map((stat) => {
+      const date = dayjs(stat.date);
+      const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+      const dayOfWeek = date.day();
+      return {
+        date: stat.date,
+        label: dayNames[dayOfWeek],
+        hours: Math.round((stat.totalSeconds / 3600) * 100) / 100,
+        totalSeconds: stat.totalSeconds,
+        sessionCount: stat.sessionCount,
+      };
+    });
+  }, [stats]);
+
+  // Calculate summary
+  const totalSeconds = useMemo(() => {
+    return stats.reduce((sum, stat) => sum + stat.totalSeconds, 0);
+  }, [stats]);
+
+  const totalSessions = useMemo(() => {
+    return stats.reduce((sum, stat) => sum + stat.sessionCount, 0);
+  }, [stats]);
+
+  const averagePerDay = useMemo(() => {
+    const daysWithData = stats.filter((s) => s.totalSeconds > 0).length;
+    return daysWithData > 0 ? totalSeconds / daysWithData : 0;
+  }, [stats, totalSeconds]);
+
+  if (stats.length === 0) {
     return (
-      <Card title="Thống kê hôm nay">
-        <p className="text-gray-500 text-center py-8">Chưa có dữ liệu hôm nay</p>
+      <Card title={`📊 Tuần (${weekDateRange})`}>
+        <p className="text-gray-500 text-center py-8">Chưa có dữ liệu</p>
       </Card>
     );
   }
 
-  const goalProgress = dailyGoal > 0 ? Number(((stats.totalSeconds / dailyGoal) * 100).toFixed(2)) : 0;
-  const goalAchieved = stats.totalSeconds >= dailyGoal;
-
   return (
-    <Card title="📊 Thống kê hôm nay" extra={<span className="text-sm text-gray-500">{stats.date}</span>}>
-      {/* Main Stats */}
+    <Card title={`📊 Tuần (${weekDateRange})`}>
+      {/* Summary Stats */}
       <Row gutter={[16, 16]} className="mb-6">
-        <Col xs={24} sm={8}>
-          <div className="text-green-700 text-2xl font-bold">
-            <Statistic
-              title="Tổng thời gian"
-              value={formatDuration(stats.totalSeconds)}
-              prefix={<ClockCircleOutlined />}
-            />
-          </div>
-        </Col>
-        <Col xs={24} sm={8}>
-          <div className="text-2xl font-bold">
-            <Statistic
-              title="Số phiên học"
-              value={stats.sessionCount}
-              suffix="phiên"
-              prefix={<CheckCircleOutlined />}
-            />
-          </div>
-        </Col>
-        <Col xs={24} sm={8}>
-          <div className="text-2xl font-bold">
-            <Statistic
-              title="Trung bình/phiên"
-              value={formatDuration(stats.averageSessionDuration)}
-              prefix={<TrophyOutlined />}
-            />
-          </div>
-        </Col>
+        <StatsCard label="Tổng thời gian" value={formatTime(totalSeconds)} color="blue" format="number" />
+        <StatsCard label="Tổng phiên" value={totalSessions} color="green" format="number" />
+        <StatsCard
+          label="Thời gian/ngày"
+          value={formatTime(Math.floor(averagePerDay))}
+          color="purple"
+          format="number"
+        />
       </Row>
 
-      {/* Goal Progress */}
-      {dailyGoal > 0 && (
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium">Tiến độ mục tiêu hôm nay</span>
-            <span className="text-sm text-gray-600">
-              {formatDuration(stats.totalSeconds)} / {formatDuration(dailyGoal)}
-            </span>
-          </div>
-          <Progress
-            percent={Number(Math.min(goalProgress, 100).toFixed(2))}
-            status={goalAchieved ? "success" : "active"}
-            strokeColor={goalAchieved ? "#52c41a" : "#1890ff"}
-          />
-          {goalAchieved && (
-            <div className="mt-2 text-center">
-              <span className="text-green-600 font-semibold">🎉 Chúc mừng! Bạn đã đạt mục tiêu hôm nay!</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Breakdown by Type */}
-      <div>
-        <h4 className="text-sm font-medium mb-3">Phân bổ theo loại</h4>
-        <Row gutter={[16, 8]}>
-          <Col span={8}>
-            <div className="text-center p-3 bg-green-50 rounded-lg">
-              <div className="text-xs text-gray-600 mb-1">Học bình thường</div>
-              <div className="text-lg font-semibold text-green-600">{formatDuration(stats.normalSeconds)}</div>
-            </div>
-          </Col>
-          <Col span={8}>
-            <div className="text-center p-3 bg-orange-50 rounded-lg">
-              <div className="text-xs text-gray-600 mb-1">Pomodoro làm việc</div>
-              <div className="text-lg font-semibold text-orange-600">{formatDuration(stats.pomodoroWorkSeconds)}</div>
-            </div>
-          </Col>
-          <Col span={8}>
-            <div className="text-center p-3 bg-purple-50 rounded-lg">
-              <div className="text-xs text-gray-600 mb-1">Pomodoro nghỉ</div>
-              <div className="text-lg font-semibold text-purple-600">{formatDuration(stats.pomodoroBreakSeconds)}</div>
-            </div>
-          </Col>
-        </Row>
+      {/* Bar Chart */}
+      <div className="bg-white rounded-lg p-4">
+        <h3 className="font-semibold mb-4">Chi tiết 7 ngày</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+            <YAxis label={{ value: "Giờ", angle: -90, position: "insideLeft" }} tick={{ fontSize: 12 }} />
+            <Tooltip content={<CustomTooltip dataFormatter={dailyChartFormatter} />} />
+            <Bar dataKey="hours" radius={[8, 8, 0, 0]}>
+              {chartData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={entry.totalSeconds > 0 ? "#1890ff" : "#e6e6e6"}
+                  opacity={entry.totalSeconds > 0 ? 1 : 0.5}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       </div>
-
-      {/* Additional Info */}
-      {stats.longestSessionDuration > 0 && (
-        <div className="mt-4 pt-4 border-t">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Phiên học dài nhất:</span>
-            <span className="font-semibold">{formatDuration(stats.longestSessionDuration)}</span>
-          </div>
-        </div>
-      )}
     </Card>
   );
 }

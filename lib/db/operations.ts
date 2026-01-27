@@ -194,7 +194,7 @@ export async function updateSettings(updates: Partial<Omit<AppSettings, "id">>):
 // ============================================================================
 
 /**
- * Calculate and save daily statistics for a specific date
+ * Calculate daily statistics for a specific date (no database save)
  */
 export async function calculateDailyStats(date: string): Promise<DailyStat> {
   const sessions = await getSessionsByDate(date);
@@ -227,6 +227,10 @@ export async function calculateDailyStats(date: string): Promise<DailyStat> {
       case "pomodoro-break":
         stat.pomodoroBreakSeconds += session.duration;
         break;
+      case "imported":
+        // Count imported sessions as normal sessions for stats
+        stat.normalSeconds += session.duration;
+        break;
     }
 
     if (session.duration > stat.longestSessionDuration) {
@@ -238,22 +242,13 @@ export async function calculateDailyStats(date: string): Promise<DailyStat> {
     stat.averageSessionDuration = Math.floor(stat.totalSeconds / sessions.length);
   }
 
-  // Save to database
-  await db.dailyStats.put(stat);
-
   return stat;
 }
 
 /**
- * Get daily statistics
+ * Get daily statistics (always calculated fresh from sessions)
  */
-export async function getDailyStat(date: string): Promise<DailyStat | undefined> {
-  const existing = await db.dailyStats.get(date);
-  if (existing) {
-    return existing;
-  }
-
-  // Calculate if not exists
+export async function getDailyStat(date: string): Promise<DailyStat> {
   return calculateDailyStats(date);
 }
 
@@ -289,4 +284,57 @@ export async function getStatsForDateRange(startDate: string, endDate: string): 
   }
 
   return stats.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+// ============================================================================
+// IMPORT OPERATIONS
+// ============================================================================
+
+/**
+ * Import a session with only date and duration (no specific start/end time)
+ */
+export async function importSession(date: string, durationSeconds: number): Promise<StudySession> {
+  const now = new Date();
+  const sessionDate = new Date(date);
+
+  // Create imported session with minimal time information
+  const session: StudySession = {
+    id: uuidv4(),
+    startTime: sessionDate.toISOString(), // Use the date as reference
+    endTime: sessionDate.toISOString(), // Same as start since we don't know actual time
+    duration: durationSeconds,
+    type: "imported",
+    status: "completed",
+    isImported: true,
+    createdAt: toISOString(now),
+    updatedAt: toISOString(now),
+    startDate: getDateString(sessionDate),
+  };
+
+  await db.sessions.add(session);
+
+  return session;
+}
+
+/**
+ * Batch import multiple sessions
+ */
+export async function importMultipleSessions(
+  imports: Array<{ date: string; durationSeconds: number }>,
+): Promise<{ success: number; failed: number; errors: string[] }> {
+  let success = 0;
+  let failed = 0;
+  const errors: string[] = [];
+
+  for (const item of imports) {
+    try {
+      await importSession(item.date, item.durationSeconds);
+      success++;
+    } catch (error) {
+      failed++;
+      errors.push(`Failed to import ${item.date}: ${error}`);
+    }
+  }
+
+  return { success, failed, errors };
 }
