@@ -1,22 +1,22 @@
 "use client";
 
-import React, { useMemo } from "react";
 import { Card, Row } from "antd";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
-import type { DailyStat } from "@/types";
-import { CustomTooltip, allTimeChartFormatter } from "./ChartTooltip";
-import { StatsCard } from "./StatsCard";
-import { formatTime } from "@/lib/time-utils";
 import dayjs from "dayjs";
+import React, { useMemo } from "react";
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+
+import { formatTime } from "@/lib/time-utils";
+import type { DailyStat } from "@/types";
+
 import type { AllTimeChartData } from "../../types/stats";
+import { allTimeChartFormatter, CustomTooltip } from "./ChartTooltip";
+import { StatsCard } from "./StatsCard";
 
 interface AllTimeStatsProps {
   stats: DailyStat[];
 }
 
 export function AllTimeStats({ stats }: AllTimeStatsProps) {
-  console.log("AllTimeStats received stats:", stats.length, stats.slice(0, 3)); // Debug
-
   // Prepare chart data grouped by month for 2 most recent years
   const chartData = useMemo((): AllTimeChartData[] => {
     if (stats.length === 0) return [];
@@ -30,7 +30,6 @@ export function AllTimeStats({ stats }: AllTimeStatsProps) {
       const year = dayjs(stat.date).year();
       return year === currentYear || year === previousYear;
     });
-    console.log("Last two years stats:", lastTwoYearsStats.length); // Debug
 
     // Group by year-month
     const monthlyData: Record<string, { totalSeconds: number; sessionCount: number }> = {};

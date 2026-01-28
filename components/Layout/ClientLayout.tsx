@@ -1,10 +1,11 @@
 "use client";
 
-import React from "react";
-import { ConfigProvider, Layout, App } from "antd";
+import { App,ConfigProvider, Layout } from "antd";
 import viVN from "antd/locale/vi_VN";
+import React from "react";
+
+import { AppFooter, AppHeader, AppInitializer } from "@/components/Layout";
 import { themeConfig } from "@/config/theme";
-import { AppHeader, AppFooter, AppInitializer } from "@/components/Layout";
 
 const { Content } = Layout;
 

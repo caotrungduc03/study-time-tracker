@@ -1,17 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Tabs, Button } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
+import { Button, Tabs } from "antd";
+import dayjs from "dayjs";
+import { useEffect, useState } from "react";
+
+import { useStatistics } from "@/hooks/useStatistics";
+import { getSessionsByDateRange } from "@/lib/db/operations";
+import type { DailyStat } from "@/types";
+
+import type { TabKey } from "../../types/stats";
 import { AllTimeStats } from "./AllTimeStats";
 import { DailySummary } from "./DailySummary";
 import { MonthlyOverview } from "./MonthlyOverview";
 import { YearlyOverview } from "./YearlyOverview";
-import { useStatistics } from "@/hooks/useStatistics";
-import { getSessionsByDateRange } from "@/lib/db/operations";
-import type { DailyStat } from "@/types";
-import type { TabKey } from "../../types/stats";
-import dayjs from "dayjs";
 
 export function StatsDashboard() {
   const { weekStats, monthStats, yearStats, loading, refresh } = useStatistics();
@@ -28,7 +30,6 @@ export function StatsDashboard() {
         const endDate = now.format("YYYY-MM-DD");
 
         const stats = await getSessionsByDateRange(startDate, endDate);
-        console.log("Loaded sessions:", stats.length, stats.slice(0, 5)); // Debug log
 
         // Group by date and calculate stats
         const dailyStats = new Map<string, DailyStat>();
@@ -62,7 +63,6 @@ export function StatsDashboard() {
         });
 
         const result = Array.from(dailyStats.values()).sort((a, b) => a.date.localeCompare(b.date));
-        console.log("Grouped daily stats:", result.length, result.slice(0, 5)); // Debug log
         setAllTimeStats(result);
       } catch (error) {
         console.error("Failed to load all time stats:", error);

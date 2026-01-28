@@ -1,15 +1,17 @@
 "use client";
 
-import React, { useMemo } from "react";
 import { Card, Row, Select } from "antd";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
-import type { DailyStat } from "@/types";
-import { CustomTooltip, yearlyChartFormatter } from "./ChartTooltip";
-import { StatsCard } from "./StatsCard";
-import { formatTime } from "@/lib/time-utils";
-import type { YearlyChartData } from "../../types/stats";
 import dayjs from "dayjs";
 import isoWeek from "dayjs/plugin/isoWeek";
+import React, { useMemo } from "react";
+import { Bar, BarChart, CartesianGrid, Cell,ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+
+import { formatTime } from "@/lib/time-utils";
+import type { DailyStat } from "@/types";
+
+import type { YearlyChartData } from "../../types/stats";
+import { CustomTooltip, yearlyChartFormatter } from "./ChartTooltip";
+import { StatsCard } from "./StatsCard";
 
 dayjs.extend(isoWeek);
 

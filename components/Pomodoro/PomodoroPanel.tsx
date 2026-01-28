@@ -1,14 +1,16 @@
 "use client";
 
-import { memo, useCallback } from "react";
 import { Card } from "antd";
-import { useSettingsStore } from "@/store/useSettingsStore";
+import { memo, useCallback } from "react";
+
 import { usePomodoro } from "@/hooks/usePomodoro";
 import { updateSettings } from "@/lib/db/operations";
-import PomodoroStatus from "./PomodoroStatus";
-import PomodoroSettings from "./PomodoroSettings";
+import { useSettingsStore } from "@/store/useSettingsStore";
+
 import PomodoroControlButtons from "./PomodoroControlButtons";
 import PomodoroCycleCount from "./PomodoroCycleCount";
+import PomodoroSettings from "./PomodoroSettings";
+import PomodoroStatus from "./PomodoroStatus";
 
 function PomodoroPanel() {
   // Use selector to get full settings for update operations

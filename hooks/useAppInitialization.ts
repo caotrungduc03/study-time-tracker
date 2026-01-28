@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { useSettingsStore } from "@/store/useSettingsStore";
-import { initializeDatabase } from "@/lib/db/schema";
+
 import { cleanupInvalidSessions, getSettings, getTodaySessions, getTodayStats } from "@/lib/db/operations";
-import type { StudySession, DailyStat } from "@/types";
+import { initializeDatabase } from "@/lib/db/schema";
+import { useSettingsStore } from "@/store/useSettingsStore";
+import type { DailyStat,StudySession } from "@/types";
 
 interface UseAppInitializationReturn {
   isLoading: boolean;

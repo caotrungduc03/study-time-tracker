@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useMemo } from "react";
 import { Card, Tooltip } from "antd";
-import { EVENT_COLORS, TIME_CONSTANTS } from "@/types";
-import type { StudySession } from "@/types";
+import React, { useMemo } from "react";
+
 import { calculateTimelinePosition, formatDuration, getTimeString } from "@/lib/time-utils";
+import type { StudySession } from "@/types";
+import { EVENT_COLORS, TIME_CONSTANTS } from "@/types";
 
 interface TimelineProps {
   sessions: StudySession[];

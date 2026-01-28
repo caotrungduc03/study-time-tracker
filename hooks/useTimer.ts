@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
-import { useTimerStore } from "@/store/useTimerStore";
+import { useCallback,useEffect, useRef } from "react";
+
+import { completeSession, createSession, deleteSession } from "@/lib/db/operations";
 import { useSettingsStore } from "@/store/useSettingsStore";
-import { createSession, completeSession, deleteSession } from "@/lib/db/operations";
+import { useTimerStore } from "@/store/useTimerStore";
 import type { StudySession } from "@/types";
 
 export function useTimer() {

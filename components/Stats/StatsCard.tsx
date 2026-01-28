@@ -1,8 +1,10 @@
 "use client";
 
-import React from "react";
 import { Col } from "antd";
+import React from "react";
+
 import { formatDuration } from "@/lib/time-utils";
+
 import type { StatsCardColor, StatsCardFormat } from "../../types/stats";
 
 interface StatsCardProps {

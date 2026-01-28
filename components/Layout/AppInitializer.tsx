@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
 import { Spin } from "antd";
+import React from "react";
+
 import { useAppInitialization } from "@/hooks/useAppInitialization";
 
 interface AppInitializerProps {

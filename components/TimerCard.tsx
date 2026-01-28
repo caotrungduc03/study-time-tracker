@@ -1,10 +1,12 @@
 "use client";
 
-import React from "react";
 import { Card, Tag } from "antd";
-import { TimerDisplay } from "./TimerDisplay";
-import { ControlButtons } from "./ControlButtons";
+import React from "react";
+
 import type { StudySession } from "@/types";
+
+import { ControlButtons } from "./ControlButtons";
+import { TimerDisplay } from "./TimerDisplay";
 
 interface TimerCardProps {
   currentTime: number;

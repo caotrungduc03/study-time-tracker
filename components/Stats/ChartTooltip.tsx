@@ -1,13 +1,15 @@
 "use client";
 
 import React from "react";
+
 import { formatDuration } from "@/lib/time-utils";
+
 import type {
+  AllTimeChartData,
   ChartDataPoint,
   DailyChartData,
   MonthlyChartData,
   YearlyChartData,
-  AllTimeChartData,
 } from "../../types/stats";
 
 interface CustomTooltipProps<T extends ChartDataPoint = ChartDataPoint> {

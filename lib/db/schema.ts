@@ -1,5 +1,6 @@
 import Dexie, { Table } from "dexie";
-import type { StudySession, AppSettings } from "@/types";
+
+import type { AppSettings,StudySession } from "@/types";
 
 export class StudyTrackerDB extends Dexie {
   sessions!: Table<StudySession, string>;

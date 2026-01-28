@@ -1,8 +1,8 @@
 "use client";
 
-import { memo } from "react";
+import { CloseCircleOutlined, FastForwardOutlined,PauseOutlined, PlayCircleOutlined } from "@ant-design/icons";
 import { Button } from "antd";
-import { PlayCircleOutlined, PauseOutlined, CloseCircleOutlined, FastForwardOutlined } from "@ant-design/icons";
+import { memo } from "react";
 
 interface PomodoroControlButtonsProps {
   state: string;

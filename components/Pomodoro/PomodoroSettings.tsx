@@ -1,7 +1,7 @@
 "use client";
 
+import { Divider, InputNumber, Space, Switch } from "antd";
 import { memo } from "react";
-import { InputNumber, Space, Divider, Switch } from "antd";
 
 interface PomodoroSettingsProps {
   workMinutes: number;

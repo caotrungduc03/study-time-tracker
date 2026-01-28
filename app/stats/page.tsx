@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+
 import { StatsDashboard } from "@/components/Stats/StatsDashboard";
 
 export default function StatsPage() {

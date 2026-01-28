@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import { PauseCircleOutlined, PlayCircleOutlined, ReloadOutlined, StopOutlined } from "@ant-design/icons";
 import { Button, Space } from "antd";
-import { PlayCircleOutlined, PauseCircleOutlined, ReloadOutlined, StopOutlined } from "@ant-design/icons";
+import React from "react";
 
 interface ControlButtonsProps {
   isRunning: boolean;

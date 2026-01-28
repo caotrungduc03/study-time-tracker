@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import type { StudySession, DailyStat } from "@/types";
+
+import type { DailyStat,StudySession } from "@/types";
 
 interface SessionState {
   sessions: StudySession[];

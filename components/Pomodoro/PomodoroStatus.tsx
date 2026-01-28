@@ -1,7 +1,8 @@
 "use client";
 
-import { memo } from "react";
 import { Progress } from "antd";
+import { memo } from "react";
+
 import { formatTime } from "@/lib/time-utils";
 
 interface PomodoroStatusProps {

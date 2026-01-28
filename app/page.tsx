@@ -1,18 +1,19 @@
 "use client";
 
-import React from "react";
-import { Statistic, Row, Col, Card, Tooltip } from "antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
-import { TimerCard } from "@/components/TimerCard";
-import { Timeline } from "@/components/Timeline/Timeline";
+import { Card, Col, Row, Statistic, Tooltip } from "antd";
+import React from "react";
+
 import PomodoroPanel from "@/components/Pomodoro/PomodoroPanel";
-import { useTimer } from "@/hooks/useTimer";
-import { usePomodoro } from "@/hooks/usePomodoro";
+import { Timeline } from "@/components/Timeline/Timeline";
+import { TimerCard } from "@/components/TimerCard";
 import { useAppInitialization } from "@/hooks/useAppInitialization";
+import { usePomodoro } from "@/hooks/usePomodoro";
+import { useTimer } from "@/hooks/useTimer";
+import { cleanupInvalidSessions } from "@/lib/db/operations";
+import { formatDuration } from "@/lib/time-utils";
 import { usePomodoroStore } from "@/store/usePomodoroStore";
 import { useTimerStore } from "@/store/useTimerStore";
-import { formatDuration } from "@/lib/time-utils";
-import { cleanupInvalidSessions } from "@/lib/db/operations";
 
 export default function Home() {
   const pomodoroState = usePomodoroStore((state) => state.state);

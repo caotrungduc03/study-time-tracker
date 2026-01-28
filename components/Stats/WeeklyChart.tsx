@@ -1,10 +1,11 @@
 "use client";
 
+import { Card, Col,Row } from "antd";
 import React, { useMemo } from "react";
-import { Card, Row, Col } from "antd";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
-import type { DailyStat } from "@/types";
+import { Bar, BarChart, CartesianGrid, Cell,ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+
 import { formatDuration } from "@/lib/time-utils";
+import type { DailyStat } from "@/types";
 
 interface WeeklyChartProps {
   stats: DailyStat[];
