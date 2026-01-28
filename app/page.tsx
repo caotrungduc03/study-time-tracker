@@ -1,17 +1,13 @@
 "use client";
 
-import { InfoCircleOutlined } from "@ant-design/icons";
-import { Card, Col, Row, Statistic, Tooltip } from "antd";
 import React from "react";
 
-import PomodoroPanel from "@/components/Pomodoro/PomodoroPanel";
+import { TodayStatsCard, TimerControlSection } from "@/components/Home";
 import { Timeline } from "@/components/Timeline/Timeline";
-import { TimerCard } from "@/components/TimerCard";
 import { useAppInitialization } from "@/hooks/useAppInitialization";
 import { usePomodoro } from "@/hooks/usePomodoro";
 import { useTimer } from "@/hooks/useTimer";
 import { cleanupInvalidSessions } from "@/lib/db/operations";
-import { formatDuration } from "@/lib/time-utils";
 import { usePomodoroStore } from "@/store/usePomodoroStore";
 import { useTimerStore } from "@/store/useTimerStore";
 
@@ -108,59 +104,26 @@ export default function Home() {
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
       {/* Timer and Pomodoro Row */}
-      <Row gutter={[16, 16]}>
-        {/* Pomodoro Panel */}
-        <Col xs={24} lg={10}>
-          <PomodoroPanel />
-        </Col>
-
-        {/* Timer Card */}
-        <Col xs={24} lg={14}>
-          <TimerCard
-            currentTime={timer.currentTime}
-            isRunning={timer.isRunning}
-            isPaused={timer.isPaused}
-            sessionType={timer.currentSession?.type}
-            pomodoroActive={pomodoroState !== "idle" && pomodoroState !== "completed"}
-            onStart={handleStart}
-            onPause={handlePause}
-            onResume={handleResume}
-            onStop={handleStop}
-            onReset={handleReset}
-          />
-        </Col>
-      </Row>
+      <TimerControlSection
+        currentTime={timer.currentTime}
+        isRunning={timer.isRunning}
+        isPaused={timer.isPaused}
+        sessionType={timer.currentSession?.type}
+        pomodoroActive={pomodoroState !== "idle" && pomodoroState !== "completed"}
+        onStart={handleStart}
+        onPause={handlePause}
+        onResume={handleResume}
+        onStop={handleStop}
+        onReset={handleReset}
+      />
 
       {/* Today's Summary */}
       {todayStats && (
-        <Card>
-          <Row gutter={16}>
-            <Col xs={24} sm={8}>
-              <Statistic
-                title="Tổng thời gian hôm nay"
-                value={formatDuration(todayStats.totalSeconds)}
-                className="text-green-700"
-              />
-            </Col>
-            <Col xs={24} sm={8}>
-              <Statistic
-                title={
-                  <span className="flex items-center gap-1">
-                    Số phiên học
-                    <Tooltip title="Chỉ tính các phiên học >= 1 phút. Phiên < 1 phút sẽ bị bỏ qua.">
-                      <InfoCircleOutlined className="text-gray-400 cursor-help text-sm" />
-                    </Tooltip>
-                  </span>
-                }
-                value={todayStats.sessionCount}
-                suffix="phiên"
-              />
-            </Col>
-            <Col xs={24} sm={8}>
-              <Statistic title="Trung bình/phiên" value={formatDuration(todayStats.averageSessionDuration)} />
-            </Col>
-          </Row>
-        </Card>
+        <TodayStatsCard
+          totalSeconds={todayStats.totalSeconds}
+          sessionCount={todayStats.sessionCount}
+          averageSessionDuration={todayStats.averageSessionDuration}
+        />
       )}
 
       {/* Timeline Full Width */}
