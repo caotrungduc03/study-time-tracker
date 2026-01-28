@@ -3,11 +3,12 @@
 import { ArrowLeftOutlined, BarChartOutlined, ImportOutlined } from "@ant-design/icons";
 import { Button, Layout, Space } from "antd";
 import Image from "next/image";
-import { usePathname,useRouter } from "next/navigation";
-import React, { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 
 import ImportModal from "@/components/ImportModal";
 import { ROUTES } from "@/constants";
+import { getAssetPath } from "@/lib/url-utils";
 
 const { Header: AntHeader } = Layout;
 
@@ -38,7 +39,7 @@ export function AppHeader() {
         <div className="container mx-auto px-4 flex items-center justify-between h-full">
           <div className="flex items-center cursor-pointer" onClick={() => router.push(ROUTES.HOME)}>
             <Image
-              src="/images/logo.png"
+              src={getAssetPath("/images/logo.png")}
               alt="Study Time Tracker Logo"
               width={200}
               height={60}

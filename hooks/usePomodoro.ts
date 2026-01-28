@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback,useEffect } from "react";
+import { useCallback, useEffect } from "react";
 
 import { usePomodoroStore } from "@/store/usePomodoroStore";
 import { useSettingsStore } from "@/store/useSettingsStore";
 
 import { useTimer } from "./useTimer";
+import { getAssetPath } from "@/lib/url-utils";
 
 export function usePomodoro() {
   // Use selectors to subscribe only to needed state
@@ -32,7 +33,7 @@ export function usePomodoro() {
     if (!soundEnabled) return;
 
     try {
-      const audio = new Audio("/sounds/alarm-kitchen.mp3");
+      const audio = new Audio(getAssetPath("/sounds/alarm-kitchen.mp3"));
       audio.volume = 0.5;
       audio.play().catch((error) => {
         console.error("Failed to play alarm sound:", error);
@@ -49,7 +50,7 @@ export function usePomodoro() {
     if (!soundEnabled) return;
 
     try {
-      const audio = new Audio("/sounds/button.wav");
+      const audio = new Audio(getAssetPath("/sounds/button.wav"));
       audio.volume = 0.3;
       audio.play().catch((error) => {
         console.error("Failed to play button sound:", error);

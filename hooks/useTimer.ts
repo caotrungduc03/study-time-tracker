@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback,useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import { completeSession, createSession, deleteSession } from "@/lib/db/operations";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { useTimerStore } from "@/store/useTimerStore";
 import type { StudySession } from "@/types";
+import { getAssetPath } from "@/lib/url-utils";
 
 export function useTimer() {
   const { isRunning, isPaused, currentTime, currentSession, setRunning, setPaused, setCurrentTime, setCurrentSession } =
@@ -23,7 +24,7 @@ export function useTimer() {
     if (!settings.pomodoro.soundEnabled) return;
 
     try {
-      const audio = new Audio("/sounds/button.wav");
+      const audio = new Audio(getAssetPath("/sounds/button.wav"));
       audio.volume = 0.3;
       audio.play().catch((error) => {
         console.error("Failed to play button sound:", error);
