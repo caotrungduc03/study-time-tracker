@@ -9,11 +9,20 @@ import type { StudySession } from "@/types";
 import { getAssetPath } from "@/lib/url-utils";
 
 export function useTimer() {
-  const { isRunning, isPaused, currentTime, currentSession, setRunning, setPaused, setCurrentTime, setCurrentSession } =
-    useTimerStore();
+  const {
+    isRunning,
+    isPaused,
+    currentTime,
+    currentSession,
+    pauseTimestamp,
+    setRunning,
+    setPaused,
+    setCurrentTime,
+    setCurrentSession,
+    setPauseTimestamp,
+  } = useTimerStore();
   const settings = useSettingsStore((state) => state.settings);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const pauseTimestampRef = useRef<number>(0); // Store timestamp when paused
   const startTimeRef = useRef<number>(0);
   const driftCheckRef = useRef<number>(0);
 
@@ -161,19 +170,19 @@ export function useTimer() {
    */
   const pause = useCallback(() => {
     if (isRunning && !isPaused) {
-      // Save timestamp when pausing
-      pauseTimestampRef.current = Date.now();
+      // Save timestamp when pausing to store
+      setPauseTimestamp(Date.now());
       setPaused(true);
     }
-  }, [isRunning, isPaused, setPaused]);
+  }, [isRunning, isPaused, setPaused, setPauseTimestamp]);
 
   /**
    * Resume the timer
    */
   const resumeTimer = useCallback(() => {
     if (isRunning && isPaused && currentSession) {
-      // Calculate how long we were paused
-      const pauseDuration = Date.now() - pauseTimestampRef.current;
+      // Calculate how long we were paused using store value
+      const pauseDuration = Date.now() - pauseTimestamp;
 
       // Adjust session start time by adding the pause duration
       // This way the timer continues from where it was paused
@@ -189,10 +198,12 @@ export function useTimer() {
 
       // Update pause state first (this will allow interval to start)
       setPaused(false);
+      // Reset pause timestamp
+      setPauseTimestamp(0);
       // Then update session
       setCurrentSession(updatedSession);
     }
-  }, [isRunning, isPaused, currentSession, setCurrentSession, setPaused]);
+  }, [isRunning, isPaused, currentSession, pauseTimestamp, setCurrentSession, setPaused, setPauseTimestamp]);
 
   /**
    * Timer tick effect

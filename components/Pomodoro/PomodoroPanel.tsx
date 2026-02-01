@@ -6,6 +6,8 @@ import { memo, useCallback } from "react";
 import { usePomodoro } from "@/hooks/usePomodoro";
 import { updateSettings } from "@/lib/db/operations";
 import { useSettingsStore } from "@/store/useSettingsStore";
+import { usePomodoroStore } from "@/store/usePomodoroStore";
+import { useTimerStore } from "@/store/useTimerStore";
 
 import PomodoroControlButtons from "./PomodoroControlButtons";
 import PomodoroCycleCount from "./PomodoroCycleCount";
@@ -16,6 +18,13 @@ function PomodoroPanel() {
   // Use selector to get full settings for update operations
   const settings = useSettingsStore((state) => state.settings);
   const setSettings = useSettingsStore((state) => state.setSettings);
+
+  // Get targetCycles from pomodoro store
+  const targetCycles = usePomodoroStore((state) => state.targetCycles);
+  const setTargetCycles = usePomodoroStore((state) => state.setTargetCycles);
+
+  // Get current timer time for elapsed time calculation
+  const currentTime = useTimerStore((state) => state.currentTime);
 
   const pomodoro = usePomodoro();
 
@@ -72,19 +81,12 @@ function PomodoroPanel() {
     [settings, setSettings],
   );
 
-  const handleAutoStartBreakToggle = useCallback(
-    async (checked: boolean) => {
-      const newSettings = {
-        ...settings,
-        pomodoro: {
-          ...settings.pomodoro,
-          autoStartBreak: checked,
-        },
-      };
-      await updateSettings({ pomodoro: newSettings.pomodoro });
-      setSettings(newSettings);
+  const handleTargetCyclesChange = useCallback(
+    (value: number | null) => {
+      if (value === null) return;
+      setTargetCycles(value);
     },
-    [settings, setSettings],
+    [setTargetCycles],
   );
 
   const isActive = pomodoro.state === "work" || pomodoro.state === "break";
@@ -96,47 +98,48 @@ function PomodoroPanel() {
       title={
         <div className="flex items-center gap-2">
           <span className="text-2xl">🍅</span>
-          <span>Pomodoro</span>
+          <span className="text-lg font-semibold">Pomodoro</span>
         </div>
       }
-      className="h-full"
+      className="h-full shadow-md hover:shadow-lg transition-shadow duration-300"
     >
-      {/* Current Status */}
-      {(isActive || isPaused) && (
-        <PomodoroStatus
+      <div className="flex flex-col gap-4">
+        {/* Current Status */}
+        {(isActive || isPaused) && (
+          <PomodoroStatus
+            state={pomodoro.state}
+            remainingSeconds={pomodoro.remainingSeconds}
+            workDuration={settings.pomodoro.workDuration}
+            breakDuration={settings.pomodoro.breakDuration}
+          />
+        )}
+
+        {/* Settings (only show when idle) */}
+        {isIdle && (
+          <PomodoroSettings
+            workMinutes={workMinutes}
+            breakMinutes={breakMinutes}
+            targetCycles={targetCycles}
+            soundEnabled={settings.pomodoro.soundEnabled}
+            onWorkDurationChange={handleWorkDurationChange}
+            onBreakDurationChange={handleBreakDurationChange}
+            onTargetCyclesChange={handleTargetCyclesChange}
+            onSoundToggle={handleSoundToggle}
+          />
+        )}
+
+        {/* Control Buttons */}
+        <PomodoroControlButtons
           state={pomodoro.state}
-          remainingSeconds={pomodoro.remainingSeconds}
-          workDuration={settings.pomodoro.workDuration}
-          breakDuration={settings.pomodoro.breakDuration}
+          elapsedTime={currentTime}
+          onStartWork={pomodoro.startWork}
+          onPause={pomodoro.pause}
+          onResume={pomodoro.resume}
+          onCancel={pomodoro.cancel}
+          onSkipBreak={pomodoro.skipBreak}
+          onComplete={pomodoro.complete}
         />
-      )}
-
-      {/* Cycle count */}
-      <PomodoroCycleCount cycleCount={pomodoro.cycleCount} />
-
-      {/* Settings (only show when idle) */}
-      {isIdle && (
-        <PomodoroSettings
-          workMinutes={workMinutes}
-          breakMinutes={breakMinutes}
-          soundEnabled={settings.pomodoro.soundEnabled}
-          autoStartBreak={settings.pomodoro.autoStartBreak}
-          onWorkDurationChange={handleWorkDurationChange}
-          onBreakDurationChange={handleBreakDurationChange}
-          onSoundToggle={handleSoundToggle}
-          onAutoStartBreakToggle={handleAutoStartBreakToggle}
-        />
-      )}
-
-      {/* Control Buttons */}
-      <PomodoroControlButtons
-        state={pomodoro.state}
-        onStartWork={pomodoro.startWork}
-        onPause={pomodoro.pause}
-        onResume={pomodoro.resume}
-        onCancel={pomodoro.cancel}
-        onSkipBreak={pomodoro.skipBreak}
-      />
+      </div>
     </Card>
   );
 }

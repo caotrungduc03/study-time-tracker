@@ -8,6 +8,7 @@ interface TimerState {
   isPaused: boolean;
   currentTime: number; // seconds elapsed
   currentSession: StudySession | null;
+  pauseTimestamp: number; // timestamp when paused
 }
 
 interface TimerActions {
@@ -15,6 +16,7 @@ interface TimerActions {
   setPaused: (isPaused: boolean) => void;
   setCurrentTime: (time: number) => void;
   setCurrentSession: (session: StudySession | null) => void;
+  setPauseTimestamp: (timestamp: number) => void;
   resetTimer: () => void;
 }
 
@@ -25,6 +27,7 @@ const initialState: TimerState = {
   isPaused: false,
   currentTime: 0,
   currentSession: null,
+  pauseTimestamp: 0,
 };
 
 export const useTimerStore = create<TimerStore>()(
@@ -39,6 +42,8 @@ export const useTimerStore = create<TimerStore>()(
       setCurrentTime: (currentTime) => set({ currentTime }),
 
       setCurrentSession: (currentSession) => set({ currentSession }),
+
+      setPauseTimestamp: (pauseTimestamp) => set({ pauseTimestamp }),
 
       resetTimer: () => set(initialState),
     }),

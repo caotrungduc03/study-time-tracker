@@ -17,6 +17,7 @@ interface TimerControlSectionProps {
   onResume: () => void;
   onStop: () => void;
   onReset: () => void;
+  onCancel: () => void;
 }
 
 export const TimerControlSection: React.FC<TimerControlSectionProps> = ({
@@ -30,6 +31,7 @@ export const TimerControlSection: React.FC<TimerControlSectionProps> = ({
   onResume,
   onStop,
   onReset,
+  onCancel,
 }) => {
   return (
     <Row gutter={[16, 16]}>
@@ -51,6 +53,7 @@ export const TimerControlSection: React.FC<TimerControlSectionProps> = ({
           onResume={onResume}
           onStop={onStop}
           onReset={onReset}
+          onCancel={onCancel}
         />
       </Col>
     </Row>

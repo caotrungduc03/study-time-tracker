@@ -1,12 +1,12 @@
 "use client";
 
-import { ArrowLeftOutlined, BarChartOutlined, ImportOutlined } from "@ant-design/icons";
+import { ArrowLeftOutlined, BarChartOutlined, SettingOutlined } from "@ant-design/icons";
 import { Button, Layout, Space } from "antd";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
-import ImportModal from "@/components/ImportModal";
+import SettingsModal from "@/components/SettingsModal";
 import { ROUTES } from "@/constants";
 import { getAssetPath } from "@/lib/url-utils";
 
@@ -26,9 +26,9 @@ function isCurrentRoute(pathname: string, route: string, exact: boolean = true):
 export function AppHeader() {
   const router = useRouter();
   const pathname = usePathname();
-  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
-  const handleImportSuccess = () => {
+  const handleSettingsSuccess = () => {
     // Reload the page to refresh data
     window.location.reload();
   };
@@ -51,28 +51,28 @@ export function AppHeader() {
           {/* Navigation Buttons - changes based on route */}
           {isCurrentRoute(pathname, ROUTES.HOME) && (
             <Space>
-              <Button icon={<ImportOutlined />} onClick={() => setImportModalOpen(true)}>
-                Import
-              </Button>
               <Button type="primary" icon={<BarChartOutlined />} onClick={() => router.push(ROUTES.STATS)}>
                 Thống kê
               </Button>
+              <Button icon={<SettingOutlined />} onClick={() => setSettingsModalOpen(true)} />
             </Space>
           )}
           {isCurrentRoute(pathname, ROUTES.STATS) && (
             <Space>
-              <Button icon={<ImportOutlined />} onClick={() => setImportModalOpen(true)}>
-                Import
-              </Button>
               <Button type="primary" icon={<ArrowLeftOutlined />} onClick={() => router.push(ROUTES.HOME)}>
                 Quay lại
               </Button>
+              <Button icon={<SettingOutlined />} onClick={() => setSettingsModalOpen(true)} />
             </Space>
           )}
         </div>
       </AntHeader>
 
-      <ImportModal open={importModalOpen} onClose={() => setImportModalOpen(false)} onSuccess={handleImportSuccess} />
+      <SettingsModal
+        open={settingsModalOpen}
+        onClose={() => setSettingsModalOpen(false)}
+        onSuccess={handleSettingsSuccess}
+      />
     </>
   );
 }

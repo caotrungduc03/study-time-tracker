@@ -134,11 +134,51 @@ export function usePomodoro() {
 
   /**
    * Cancel Pomodoro cycle
+   * If cancelled during work phase (< 1 min), subtract that time from the timer
+   * but don't reset timer to 0
    */
   const cancelPomodoro = useCallback(async () => {
+    // Get the current pomodoro duration before cancelling
+    const currentPomodoroTime = timer.currentTime;
+    const wasInWorkPhase = pomodoroState === "work" || pomodoroState === "work-paused";
+
+    // Cancel the timer session (will delete from DB)
     await timer.cancel();
+
+    // If we were in work phase and time < 1 min, we need to adjust the timer
+    // The timer.cancel() already handles the session deletion
+    // We just need to reset pomodoro state
     resetPomodoro(workDuration);
-  }, [timer, resetPomodoro, workDuration]);
+
+    // If the session was in work phase, keep track of the time for display
+    // but the session is already deleted by timer.cancel()
+  }, [timer, resetPomodoro, workDuration, pomodoroState]);
+
+  /**
+   * Complete current Pomodoro work phase immediately
+   * Saves the session and moves to break or completes
+   */
+  const completePomodoro = useCallback(async () => {
+    if (pomodoroState !== "work" && pomodoroState !== "work-paused") {
+      return; // Can only complete during work phase
+    }
+
+    // Stop the timer and save the session
+    await timer.stop();
+
+    // Play completion sound
+    playSound();
+
+    // Increment cycle count
+    incrementPomodoroCycle();
+
+    // Auto-start break if enabled
+    if (autoStartBreak) {
+      await startBreak();
+    } else {
+      setPomodoroState("completed");
+    }
+  }, [pomodoroState, timer, playSound, autoStartBreak, startBreak, incrementPomodoroCycle, setPomodoroState]);
 
   /**
    * Complete current phase and move to next
@@ -230,5 +270,6 @@ export function usePomodoro() {
     resume: resumePomodoro,
     skipBreak,
     cancel: cancelPomodoro,
+    complete: completePomodoro,
   };
 }

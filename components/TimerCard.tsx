@@ -19,6 +19,7 @@ interface TimerCardProps {
   onResume?: () => void;
   onStop: () => void;
   onReset?: () => void;
+  onCancel?: () => void;
 }
 
 export function TimerCard({
@@ -32,6 +33,7 @@ export function TimerCard({
   onResume,
   onStop,
   onReset,
+  onCancel,
 }: TimerCardProps) {
   // Determine if this is a Pomodoro session
   const isPomodoroWork = sessionType === "pomodoro-work";
@@ -64,6 +66,7 @@ export function TimerCard({
           onResume={onResume}
           onStop={onStop}
           onReset={onReset}
+          onCancel={onCancel}
           disableStart={pomodoroActive}
         />
       </div>

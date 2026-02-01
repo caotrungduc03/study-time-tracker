@@ -1,6 +1,12 @@
 "use client";
 
-import { PauseCircleOutlined, PlayCircleOutlined, ReloadOutlined, StopOutlined } from "@ant-design/icons";
+import {
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  PauseCircleOutlined,
+  PlayCircleOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons";
 import { Button, Space } from "antd";
 import React from "react";
 
@@ -13,6 +19,7 @@ interface ControlButtonsProps {
   onResume?: () => void;
   onStop: () => void;
   onReset?: () => void;
+  onCancel?: () => void;
   disableStart?: boolean;
   disableStop?: boolean;
 }
@@ -26,6 +33,7 @@ export function ControlButtons({
   onResume,
   onStop,
   onReset,
+  onCancel,
   disableStart = false,
   disableStop = false,
 }: ControlButtonsProps) {
@@ -49,29 +57,42 @@ export function ControlButtons({
                 icon={<PauseCircleOutlined />}
                 onClick={onPause}
                 disabled={disableStop}
-                className="min-w-[120px] h-[56px] text-lg font-semibold"
+                className="min-w-[100px] h-[56px] text-lg font-semibold"
               >
                 Tạm dừng
               </Button>
             ) : isPaused && onResume ? (
               <Button
-                type="primary"
+                type="default"
                 icon={<PlayCircleOutlined />}
                 onClick={onResume}
-                className="min-w-[120px] h-[56px] text-lg font-semibold"
+                className="min-w-[100px] h-[56px] text-lg font-semibold bg-blue-500 hover:bg-blue-600 text-white border-blue-500"
               >
                 Tiếp tục
               </Button>
             ) : null}
-            <Button
-              danger
-              icon={<StopOutlined />}
-              onClick={onStop}
-              disabled={disableStop}
-              className="min-w-[120px] h-[56px] text-lg font-semibold"
-            >
-              Dừng
-            </Button>
+            {currentTime >= 60 && (
+              <Button
+                type="primary"
+                icon={<CheckCircleOutlined />}
+                onClick={onStop}
+                disabled={disableStop}
+                className="min-w-[100px] h-[56px] text-lg font-semibold bg-green-600 hover:bg-green-700 border-green-600"
+              >
+                Hoàn thành
+              </Button>
+            )}
+            {onCancel && (
+              <Button
+                danger
+                icon={<CloseCircleOutlined />}
+                onClick={onCancel}
+                disabled={disableStop}
+                className="min-w-[100px] h-[56px] text-lg font-semibold"
+              >
+                Hủy bỏ
+              </Button>
+            )}
           </Space>
         )}
 

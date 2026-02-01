@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 
-import type { AppSettings, DailyStat,StudySession } from "@/types";
+import type { AppSettings, DailyStat, StudySession } from "@/types";
 
 import { db, getDateString, toISOString } from "./schema";
 
@@ -294,23 +294,30 @@ export async function getStatsForDateRange(startDate: string, endDate: string): 
 
 /**
  * Import a session with only date and duration (no specific start/end time)
+ * The date is expected to be in YYYY-MM-DD format representing a LOCAL date
+ * We need to store it correctly so that queries by startDate work properly
  */
 export async function importSession(date: string, durationSeconds: number): Promise<StudySession> {
   const now = new Date();
-  const sessionDate = new Date(date);
+
+  // Parse the date string (YYYY-MM-DD) and create a date at noon local time
+  // Using noon avoids edge cases where timezone conversion might shift the day
+  const [year, month, day] = date.split("-").map(Number);
+  const localDate = new Date(year, month - 1, day, 12, 0, 0);
 
   // Create imported session with minimal time information
   const session: StudySession = {
     id: uuidv4(),
-    startTime: sessionDate.toISOString(), // Use the date as reference
-    endTime: sessionDate.toISOString(), // Same as start since we don't know actual time
+    startTime: localDate.toISOString(), // This will be stored as UTC
+    endTime: localDate.toISOString(), // Same as start since we don't know actual time
     duration: durationSeconds,
     type: "imported",
     status: "completed",
     isImported: true,
     createdAt: toISOString(now),
     updatedAt: toISOString(now),
-    startDate: getDateString(sessionDate),
+    // Keep the original local date string for startDate (used for date-based queries)
+    startDate: date,
   };
 
   await db.sessions.add(session);

@@ -7,6 +7,7 @@ interface PomodoroStoreState {
   state: PomodoroState;
   remainingSeconds: number;
   cycleCount: number;
+  targetCycles: number;
   currentSessionId?: string;
 }
 
@@ -14,6 +15,7 @@ interface PomodoroActions {
   setPomodoroState: (state: PomodoroState) => void;
   setPomodoroRemaining: (seconds: number) => void;
   setCurrentSessionId: (sessionId: string | undefined) => void;
+  setTargetCycles: (cycles: number) => void;
   incrementPomodoroCycle: () => void;
   resetPomodoro: (workDuration: number) => void;
 }
@@ -24,6 +26,7 @@ const initialState: PomodoroStoreState = {
   state: "idle",
   remainingSeconds: 1500, // 25 minutes default
   cycleCount: 0,
+  targetCycles: 1,
   currentSessionId: undefined,
 };
 
@@ -38,15 +41,18 @@ export const usePomodoroStore = create<PomodoroStore>()(
 
       setCurrentSessionId: (currentSessionId) => set({ currentSessionId }),
 
+      setTargetCycles: (targetCycles) => set({ targetCycles }),
+
       incrementPomodoroCycle: () => set((prev) => ({ cycleCount: prev.cycleCount + 1 })),
 
       resetPomodoro: (workDuration) =>
-        set({
+        set((prev) => ({
           state: "idle",
           remainingSeconds: workDuration,
           cycleCount: 0,
+          targetCycles: prev.targetCycles, // Keep target cycles
           currentSessionId: undefined,
-        }),
+        })),
     }),
     { name: "PomodoroStore" },
   ),
