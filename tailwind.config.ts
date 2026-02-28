@@ -22,6 +22,15 @@ export default {
       spacing: {
         15: "3.75rem",
       },
+      animation: {
+        "fade-in": "fadeIn 0.25s ease-out",
+      },
+      keyframes: {
+        fadeIn: {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+      },
     },
   },
   plugins: [],

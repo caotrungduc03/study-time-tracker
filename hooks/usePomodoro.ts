@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
+import { getAssetPath } from "@/lib/url-utils";
 import { usePomodoroStore } from "@/store/usePomodoroStore";
 import { useSettingsStore } from "@/store/useSettingsStore";
-import { getAssetPath } from "@/lib/url-utils";
 import type { PomodoroPhase } from "@/types";
 
 interface Milestone {

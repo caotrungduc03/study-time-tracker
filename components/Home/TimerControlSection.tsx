@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+
 import { TimerCard } from "@/components/TimerCard";
 
 interface TimerControlSectionProps {

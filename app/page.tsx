@@ -1,19 +1,20 @@
-"use client";
+'use client';
 
-import React, { useEffect } from "react";
+import React, { useEffect } from 'react';
 
-import PomodoroSettingsCard from "@/components/PomodoroSettingsCard";
-import { TimerCard } from "@/components/TimerCard";
-import { Timeline } from "@/components/Timeline/Timeline";
-import { useAppInitialization } from "@/hooks/useAppInitialization";
-import { usePomodoro } from "@/hooks/usePomodoro";
-import { useTimer } from "@/hooks/useTimer";
-import { cleanupInvalidSessions } from "@/lib/db/operations";
-import { usePomodoroStore } from "@/store/usePomodoroStore";
-import { useTimerStore } from "@/store/useTimerStore";
+import PomodoroSettingsCard from '@/components/PomodoroSettingsCard';
+import { Timeline } from '@/components/Timeline/Timeline';
+import { TimerCard } from '@/components/TimerCard';
+import { useAppInitialization } from '@/hooks/useAppInitialization';
+import { usePomodoro } from '@/hooks/usePomodoro';
+import { useTimer } from '@/hooks/useTimer';
+import { cleanupInvalidSessions } from '@/lib/db/operations';
+import { usePomodoroStore } from '@/store/usePomodoroStore';
+import { useTimerStore } from '@/store/useTimerStore';
 
 export default function Home() {
-  const { setRunning, setPaused, setCurrentTime, setCurrentSession } = useTimerStore();
+  const { setRunning, setPaused, setCurrentTime, setCurrentSession } =
+    useTimerStore();
   const resetPomodoro = usePomodoroStore((s) => s.resetPomodoro);
   const timer = useTimer();
   const pomodoro = usePomodoro();
@@ -23,13 +24,13 @@ export default function Home() {
     if (timer.isRunning && !timer.isPaused) {
       pomodoro.tick(timer.currentTime);
     }
-  }, [timer.currentTime, timer.isRunning, timer.isPaused, pomodoro.tick]);
+  }, [timer.currentTime, timer.isRunning, timer.isPaused, pomodoro]);
 
   const handleStart = async () => {
     try {
       await timer.start();
     } catch (error) {
-      console.error("Failed to start timer:", error);
+      console.error('Failed to start timer:', error);
     }
   };
 
@@ -37,7 +38,7 @@ export default function Home() {
     try {
       timer.pause();
     } catch (error) {
-      console.error("Failed to pause timer:", error);
+      console.error('Failed to pause timer:', error);
     }
   };
 
@@ -45,7 +46,7 @@ export default function Home() {
     try {
       timer.resumeTimer();
     } catch (error) {
-      console.error("Failed to resume timer:", error);
+      console.error('Failed to resume timer:', error);
     }
   };
 
@@ -70,12 +71,12 @@ export default function Home() {
         await refreshData();
       }
     } catch (error) {
-      console.error("Failed to reset timer:", error);
+      console.error('Failed to reset timer:', error);
     }
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
+    <div className="container mx-auto flex flex-col gap-6 px-4 py-6">
       <PomodoroSettingsCard disabled={timer.isRunning} />
 
       <TimerCard

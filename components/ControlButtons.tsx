@@ -1,15 +1,20 @@
-"use client";
+'use client';
 
-import { PauseCircleOutlined, PlayCircleOutlined, ReloadOutlined } from "@ant-design/icons";
-import { Button, Space } from "antd";
-import React, { useCallback } from "react";
+import {
+  PauseCircleOutlined,
+  PlayCircleOutlined,
+  ReloadOutlined,
+} from '@ant-design/icons';
+import { Button, Space } from 'antd';
+import React, { useCallback } from 'react';
 
-import { getAssetPath } from "@/lib/url-utils";
+import { getAssetPath } from '@/lib/url-utils';
 
 interface ControlButtonsProps {
   isRunning: boolean;
   isPaused?: boolean;
   currentTime?: number;
+  isFullPage?: boolean;
   onStart: () => void;
   onPause?: () => void;
   onResume?: () => void;
@@ -20,6 +25,7 @@ export function ControlButtons({
   isRunning,
   isPaused = false,
   currentTime = 0,
+  isFullPage = false,
   onStart,
   onPause,
   onResume,
@@ -27,7 +33,7 @@ export function ControlButtons({
 }: ControlButtonsProps) {
   const playClick = useCallback(() => {
     try {
-      const audio = new Audio(getAssetPath("/sounds/button.wav"));
+      const audio = new Audio(getAssetPath('/sounds/button.wav'));
       audio.volume = 0.5;
       audio.play().catch(() => {});
     } catch {
@@ -65,7 +71,11 @@ export function ControlButtons({
             Bắt đầu
           </Button>
         ) : !isPaused && onPause ? (
-          <Button icon={<PauseCircleOutlined />} onClick={handlePause} className="h-[56px] text-lg font-semibold">
+          <Button
+            icon={<PauseCircleOutlined />}
+            onClick={handlePause}
+            className="h-[56px] text-lg font-semibold"
+          >
             Tạm dừng
           </Button>
         ) : isPaused && onResume ? (
@@ -73,7 +83,7 @@ export function ControlButtons({
             type="primary"
             icon={<PlayCircleOutlined />}
             onClick={handleResume}
-            className="h-[56px] text-lg font-semibold bg-blue-500 hover:bg-blue-600 text-white border-blue-500"
+            className="h-[56px] border-blue-500 bg-blue-500 text-lg font-semibold text-white hover:bg-blue-600"
           >
             Tiếp tục
           </Button>
@@ -86,7 +96,11 @@ export function ControlButtons({
             icon={<ReloadOutlined />}
             onClick={handleReset}
             disabled={currentTime === 0 && !isRunning}
-            className="h-[56px] text-lg font-semibold"
+            className={
+              isFullPage
+                ? 'h-[56px] !border-red-500 !bg-red-500/10 text-lg font-semibold !text-red-400 hover:!border-red-400 hover:!bg-red-500/20 hover:!text-red-300 disabled:!border-slate-600 disabled:!bg-transparent disabled:!text-slate-600'
+                : 'h-[56px] text-lg font-semibold'
+            }
           >
             Reset
           </Button>

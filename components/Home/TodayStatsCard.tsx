@@ -2,7 +2,7 @@
 
 import { Card, Col, Row, Statistic } from "antd";
 import React from "react";
-import { InfoTooltip } from "@/components/InfoTooltip";
+
 import { formatDuration } from "@/lib/time-utils";
 
 interface TodayStatsCardProps {

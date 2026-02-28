@@ -10,8 +10,8 @@ import {
 import { Card, InputNumber, Progress, Switch, Tooltip } from 'antd';
 import { memo, useCallback } from 'react';
 
-import { updateSettings } from '@/lib/db/operations';
 import { usePomodoro } from '@/hooks/usePomodoro';
+import { updateSettings } from '@/lib/db/operations';
 import { usePomodoroStore } from '@/store/usePomodoroStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
@@ -150,9 +150,9 @@ function PomodoroSettingsCard({ disabled = false }: PomodoroSettingsCardProps) {
             size={84}
             strokeColor={progressPercent === 100 ? '#52c41a' : '#fa8c16'}
             format={() => (
-              <span className="text-base font-semibold">
+              <span className="text-sm font-semibold">
                 {completedCycles}
-                <span className="text-xs text-gray-400">/{targetCycles}</span>
+                <span className="text-gray-400">/{targetCycles}</span>
               </span>
             )}
           />
