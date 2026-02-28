@@ -17,13 +17,11 @@ interface MonthlyOverviewProps {
 }
 
 export function MonthlyOverview({ stats }: MonthlyOverviewProps) {
-  // Get current month (always show current month, not data month)
   const monthDateRange = useMemo((): MonthDateRange => {
     const now = dayjs();
     return { start: now.year(), end: now.month() };
   }, []);
 
-  // Fill in missing dates with empty stats
   const completeStats = useMemo(() => {
     const startOfMonth = dayjs().year(monthDateRange.start).month(monthDateRange.end).startOf("month");
     const daysInMonth = startOfMonth.daysInMonth();
@@ -54,7 +52,6 @@ export function MonthlyOverview({ stats }: MonthlyOverviewProps) {
     });
   }, [stats, monthDateRange]);
 
-  // Prepare chart data
   const chartData = useMemo((): MonthlyChartData[] => {
     return completeStats.map((stat) => {
       const date = dayjs(stat.date);
@@ -68,7 +65,6 @@ export function MonthlyOverview({ stats }: MonthlyOverviewProps) {
     });
   }, [completeStats]);
 
-  // Calculate monthly totals
   const monthTotal = useMemo(() => {
     return completeStats.reduce((sum, stat) => sum + stat.totalSeconds, 0);
   }, [completeStats]);
@@ -91,7 +87,6 @@ export function MonthlyOverview({ stats }: MonthlyOverviewProps) {
 
   return (
     <Card title={`📅 ${monthTitle}`}>
-      {/* Summary Stats */}
       <Row gutter={[16, 16]} className="mb-6">
         <StatsCard label="Tổng thời gian" value={formatTime(monthTotal)} color="blue" format="number" />
         <StatsCard label="Tổng phiên" value={monthSessions} color="green" format="number" />
@@ -103,7 +98,6 @@ export function MonthlyOverview({ stats }: MonthlyOverviewProps) {
         />
       </Row>
 
-      {/* Bar Chart */}
       <div className="bg-white rounded-lg p-4">
         <h3 className="font-semibold mb-4">Chi tiết từng ngày</h3>
         <ResponsiveContainer width="100%" height={300}>

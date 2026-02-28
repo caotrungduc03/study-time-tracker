@@ -20,7 +20,6 @@ interface YearlyOverviewProps {
 }
 
 export function YearlyOverview({ stats }: YearlyOverviewProps) {
-  // Get available years from stats
   const availableYears = useMemo(() => {
     const years = new Set<number>();
     stats.forEach((stat) => {
@@ -31,17 +30,14 @@ export function YearlyOverview({ stats }: YearlyOverviewProps) {
 
   const [selectedYear, setSelectedYear] = React.useState<number>(availableYears[0] || dayjs().year());
 
-  // Filter stats for selected year
   const yearStats = useMemo(() => {
     return stats.filter((stat) => dayjs(stat.date).year() === selectedYear);
   }, [stats, selectedYear]);
 
-  // Prepare chart data - create all 52 weeks, populated or empty
   const chartData = useMemo((): YearlyChartData[] => {
     const weeklyData: Record<number, { totalSeconds: number; daysStudied: number; sessionCount: number }> = {};
     const weekInfo: Record<number, string> = {};
 
-    // Aggregate data by ISO week number
     yearStats.forEach((stat) => {
       const date = dayjs(stat.date);
       const weekNum = date.isoWeek();
@@ -58,7 +54,6 @@ export function YearlyOverview({ stats }: YearlyOverviewProps) {
       }
     });
 
-    // Create array for all weeks (1-52), with empty data for missing weeks
     const weeks: YearlyChartData[] = [];
     for (let w = 1; w <= 52; w++) {
       weeks.push({
@@ -72,7 +67,6 @@ export function YearlyOverview({ stats }: YearlyOverviewProps) {
     return weeks;
   }, [yearStats]);
 
-  // Calculate yearly totals
   const yearTotal = useMemo(() => {
     return yearStats.reduce((sum, stat) => sum + stat.totalSeconds, 0);
   }, [yearStats]);
@@ -110,7 +104,6 @@ export function YearlyOverview({ stats }: YearlyOverviewProps) {
         )
       }
     >
-      {/* Summary Stats */}
       <Row gutter={[16, 16]} className="mb-6">
         <StatsCard label="Tổng thời gian" value={formatTime(yearTotal)} color="blue" format="number" />
         <StatsCard label="Tổng phiên" value={totalSessions} color="green" format="number" />
@@ -122,7 +115,6 @@ export function YearlyOverview({ stats }: YearlyOverviewProps) {
         />
       </Row>
 
-      {/* Bar Chart */}
       <div className="bg-white rounded-lg p-4">
         <h3 className="font-semibold mb-4">Chi tiết từng tuần</h3>
         <ResponsiveContainer width="100%" height={400}>

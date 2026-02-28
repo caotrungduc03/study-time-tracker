@@ -17,7 +17,6 @@ interface DailySummaryProps {
 }
 
 export function DailySummary({ stats }: DailySummaryProps) {
-  // Get week date range
   const weekDateRange = useMemo(() => {
     if (stats.length === 0) return "";
     const firstDate = dayjs(stats[0].date);
@@ -27,7 +26,6 @@ export function DailySummary({ stats }: DailySummaryProps) {
     return `${firstDay} - ${lastDay}`;
   }, [stats]);
 
-  // Prepare chart data - last 7 days (Monday to Sunday)
   const chartData = useMemo((): DailyChartData[] => {
     const last7Days = stats.slice(-7);
     return last7Days.map((stat) => {
@@ -44,7 +42,6 @@ export function DailySummary({ stats }: DailySummaryProps) {
     });
   }, [stats]);
 
-  // Calculate summary
   const totalSeconds = useMemo(() => {
     return stats.reduce((sum, stat) => sum + stat.totalSeconds, 0);
   }, [stats]);
@@ -68,7 +65,6 @@ export function DailySummary({ stats }: DailySummaryProps) {
 
   return (
     <Card title={`📊 Tuần (${weekDateRange})`}>
-      {/* Summary Stats */}
       <Row gutter={[16, 16]} className="mb-6">
         <StatsCard label="Tổng thời gian" value={formatTime(totalSeconds)} color="blue" format="number" />
         <StatsCard label="Tổng phiên" value={totalSessions} color="green" format="number" />
@@ -80,7 +76,6 @@ export function DailySummary({ stats }: DailySummaryProps) {
         />
       </Row>
 
-      {/* Bar Chart */}
       <div className="bg-white rounded-lg p-4">
         <h3 className="font-semibold mb-4">Chi tiết 7 ngày</h3>
         <ResponsiveContainer width="100%" height={300}>

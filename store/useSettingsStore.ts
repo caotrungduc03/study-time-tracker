@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { devtools, persist } from "zustand/middleware";
+import { persist } from "zustand/middleware";
 
 import type { AppSettings } from "@/types";
 import { DEFAULT_SETTINGS } from "@/types";
@@ -23,49 +23,46 @@ const initialState: SettingsState = {
 };
 
 export const useSettingsStore = create<SettingsStore>()(
-  devtools(
-    persist(
-      (set) => ({
-        ...initialState,
+  persist(
+    (set) => ({
+      ...initialState,
 
-        setSettings: (settings) => set({ settings }),
+      setSettings: (settings) => set({ settings }),
 
-        updatePomodoroSettings: (pomodoroSettings) =>
-          set((prev) => ({
-            settings: {
-              ...prev.settings,
-              pomodoro: { ...prev.settings.pomodoro, ...pomodoroSettings },
+      updatePomodoroSettings: (pomodoroSettings) =>
+        set((prev) => ({
+          settings: {
+            ...prev.settings,
+            pomodoro: { ...prev.settings.pomodoro, ...pomodoroSettings },
+          },
+        })),
+
+      updateAppSettings: (appSettings) =>
+        set((prev) => ({
+          settings: {
+            ...prev.settings,
+            app: { ...prev.settings.app, ...appSettings },
+          },
+        })),
+
+      updateNotificationSettings: (notificationSettings) =>
+        set((prev) => ({
+          settings: {
+            ...prev.settings,
+            notifications: {
+              ...prev.settings.notifications,
+              ...notificationSettings,
             },
-          })),
+          },
+        })),
 
-        updateAppSettings: (appSettings) =>
-          set((prev) => ({
-            settings: {
-              ...prev.settings,
-              app: { ...prev.settings.app, ...appSettings },
-            },
-          })),
-
-        updateNotificationSettings: (notificationSettings) =>
-          set((prev) => ({
-            settings: {
-              ...prev.settings,
-              notifications: {
-                ...prev.settings.notifications,
-                ...notificationSettings,
-              },
-            },
-          })),
-
-        resetSettings: () => set(initialState),
+      resetSettings: () => set(initialState),
+    }),
+    {
+      name: "settings-storage",
+      partialize: (state) => ({
+        settings: state.settings,
       }),
-      {
-        name: "settings-storage",
-        partialize: (state) => ({
-          settings: state.settings,
-        }),
-      },
-    ),
-    { name: "SettingsStore" },
+    },
   ),
 );

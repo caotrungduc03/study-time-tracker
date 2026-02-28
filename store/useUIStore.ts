@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { devtools } from "zustand/middleware";
 
 interface UIState {
   activeTab: "timer" | "stats" | "history";
@@ -18,15 +17,10 @@ const initialState: UIState = {
   selectedDate: new Date().toISOString().split("T")[0],
 };
 
-export const useUIStore = create<UIStore>()(
-  devtools(
-    (set) => ({
-      ...initialState,
+export const useUIStore = create<UIStore>()((set) => ({
+  ...initialState,
 
-      setActiveTab: (activeTab) => set({ activeTab }),
+  setActiveTab: (activeTab) => set({ activeTab }),
 
-      setSelectedDate: (selectedDate) => set({ selectedDate }),
-    }),
-    { name: "UIStore" },
-  ),
-);
+  setSelectedDate: (selectedDate) => set({ selectedDate }),
+}));

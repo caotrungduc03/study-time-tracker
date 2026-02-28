@@ -22,7 +22,6 @@ interface SettingsModalProps {
 type MenuKey = "import" | "export";
 type ImportType = "text" | "json";
 
-// Interface for the exported JSON structure
 interface ExportedData {
   version: string;
   exportedAt: string;
@@ -39,10 +38,10 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
   const [inputText, setInputText] = useState("");
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<ParsedEntry[]>([]);
+  const [textDuplicates, setTextDuplicates] = useState(0);
   const [jsonPreview, setJsonPreview] = useState<{ sessions: number; settings: number } | null>(null);
   const [jsonData, setJsonData] = useState<ExportedData | null>(null);
 
-  // Parse input text to show preview
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
     setInputText(text);
@@ -52,13 +51,14 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
       return;
     }
 
-    const { entries } = parseImportData(text);
+    const { entries, duplicatesCount } = parseImportData(text);
     setPreview(entries);
+    setTextDuplicates(duplicatesCount);
   };
 
   const handleTextImport = async () => {
     if (preview.length === 0) {
-      message.warning("Không có dữ liệu hợp lệ để import");
+      message.warning("Không có dữ liệu hợp lệ để nhập");
       return;
     }
 
@@ -72,7 +72,7 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
       );
 
       if (result.success > 0) {
-        message.success(`Đã import thành công ${result.success} phiên học`);
+        message.success(`Đã lưu thành công ${result.success} ngày học`);
         setInputText("");
         setPreview([]);
         onSuccess?.();
@@ -80,12 +80,12 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
       }
 
       if (result.failed > 0) {
-        message.error(`Có ${result.failed} phiên không thể import`);
+        message.error(`Có ${result.failed} mục bị lỗi không thể nhập`);
         console.error("Import errors:", result.errors);
       }
     } catch (error) {
       console.error("Import failed:", error);
-      message.error("Lỗi khi import dữ liệu");
+      message.error("Lỗi khi nhập dữ liệu");
     } finally {
       setLoading(false);
     }
@@ -93,7 +93,7 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
 
   const handleJsonImport = async () => {
     if (!jsonData) {
-      message.warning("Chưa có file JSON để import");
+      message.warning("Chưa có file JSON để nhập");
       return;
     }
 
@@ -101,24 +101,19 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
     try {
       const { sessions, settings } = jsonData.data;
 
-      // Import sessions
       let sessionSuccess = 0;
       let sessionFailed = 0;
 
       for (const session of sessions) {
         try {
-          // Check if session already exists
-          const existing = await db.sessions.get(session.id);
-          if (!existing) {
-            await db.sessions.add(session);
-            sessionSuccess++;
-          }
-        } catch {
+          await db.sessions.add(session);
+          sessionSuccess++;
+        } catch (error) {
+          console.error("Session import error:", error);
           sessionFailed++;
         }
       }
 
-      // Import settings (merge with existing)
       for (const setting of settings) {
         try {
           const settingWithId = setting as { id: string };
@@ -134,7 +129,7 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
       }
 
       message.success(
-        `Đã import thành công ${sessionSuccess} phiên học${sessionFailed > 0 ? `, ${sessionFailed} bị trùng hoặc lỗi` : ""}`,
+        `Đã nhập thành công ${sessionSuccess} ngày học${sessionFailed > 0 ? `, lỗi ${sessionFailed} mục` : ""}`,
       );
       setJsonData(null);
       setJsonPreview(null);
@@ -142,7 +137,7 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
       onClose();
     } catch (error) {
       console.error("JSON Import failed:", error);
-      message.error("Lỗi khi import dữ liệu từ file JSON");
+      message.error("Lỗi khi nhập dữ liệu từ file JSON");
     } finally {
       setLoading(false);
     }
@@ -155,7 +150,6 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
         const content = e.target?.result as string;
         const data = JSON.parse(content) as ExportedData;
 
-        // Validate structure
         if (!data.data || !data.data.sessions) {
           message.error("File JSON không đúng định dạng");
           return;
@@ -178,7 +172,6 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
   const handleExport = async () => {
     setLoading(true);
     try {
-      // Get all sessions from database
       const sessions = await db.sessions.toArray();
       const settings = await db.settings.toArray();
 
@@ -192,7 +185,6 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
         },
       };
 
-      // Create and download JSON file
       const blob = new Blob([JSON.stringify(exportData, null, 2)], {
         type: "application/json",
       });
@@ -226,12 +218,12 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
     {
       key: "import",
       icon: <ImportOutlined />,
-      label: "Import dữ liệu",
+      label: "Nhập dữ liệu",
     },
     {
       key: "export",
       icon: <ExportOutlined />,
-      label: "Export dữ liệu",
+      label: "Xuất dữ liệu",
     },
   ];
 
@@ -240,7 +232,7 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
       return (
         <Space orientation="vertical" style={{ width: "100%" }} size="middle">
           <Alert
-            title="Import từ file backup"
+            title="Khôi phục từ file backup"
             description="Chọn file JSON đã được export trước đó để khôi phục dữ liệu."
             type="info"
             showIcon
@@ -264,7 +256,7 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
               title="Đã đọc file thành công"
               description={
                 <div>
-                  <p>📊 {jsonPreview.sessions} phiên học</p>
+                  <p>📊 {jsonPreview.sessions} ngày học</p>
                   <p>⚙️ {jsonPreview.settings} cài đặt</p>
                 </div>
               }
@@ -281,7 +273,7 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
             disabled={!jsonData}
             block
           >
-            Import từ file JSON
+            Nhập từ file JSON
           </Button>
         </Space>
       );
@@ -292,22 +284,13 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
         <Alert
           title="Hướng dẫn"
           description={
-            <div className="space-y-2">
-              <p className="mb-2">
-                Mỗi dòng nhập một phiên học theo format: <strong>ngày,thời gian</strong>
-              </p>
-              <p className="mb-2 text-orange-600">
-                ⚠️ Thời gian nhập theo múi giờ hiện tại của bạn ({Intl.DateTimeFormat().resolvedOptions().timeZone})
-              </p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>1/1/2025,1h20&apos;00&apos;&apos;</li>
-                <li>2/2/2025,1h30&apos;</li>
-                <li>15/3/2025,45&apos; (45 phút)</li>
-                <li>20/4/2025,2h (2 giờ)</li>
-              </ul>
-              <p className="text-sm text-gray-500 mt-2">
-                Có thể bỏ qua giây hoặc phút. Dòng bắt đầu bằng # sẽ bị bỏ qua.
-              </p>
+            <div className="text-sm">
+              Cấu trúc: <Text strong>ngày,thời gian</Text>
+              <div className="text-xs text-gray-500 mt-1">
+                Hỗ trợ: <Text code>DD/MM/YYYY</Text>, <Text code>YYYY-MM-DD</Text> | <Text code>XhY'Z''</Text>,{" "}
+                <Text code>HH:mm:ss</Text>
+              </div>
+              <div className="text-xs text-blue-600 mt-1">Ví dụ: 15/01/2025,1h30'00'' hoặc 2025-01-15,01:30:00</div>
             </div>
           }
           type="info"
@@ -316,18 +299,19 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
 
         <div className="space-y-2">
           <Text strong>Nhập dữ liệu:</Text>
-          <TextArea
-            rows={10}
-            value={inputText}
-            onChange={handleInputChange}
-            className="font-mono"
-            placeholder="1/1/2025,1h30'&#10;2/1/2025,2h&#10;3/1/2025,45'"
-          />
+          <TextArea rows={10} value={inputText} onChange={handleInputChange} className="font-mono text-sm" />
         </div>
 
-        {preview.length > 0 && (
-          <Alert title={`Đã phân tích ${preview.length} phiên học hợp lệ`} type="success" showIcon />
-        )}
+        <Space orientation="vertical" style={{ width: "100%" }} size="small">
+          <Alert title={`Đã nhận diện ${preview.length} ngày học hợp lệ`} type="success" showIcon />
+          {textDuplicates > 0 && (
+            <Alert
+              title={`Lưu ý: Có ${textDuplicates} dòng bị trùng ngày trong nội dung nhập đã được tự động xử lý.`}
+              type="warning"
+              showIcon
+            />
+          )}
+        </Space>
 
         <Button
           type="primary"
@@ -337,7 +321,7 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
           disabled={preview.length === 0}
           block
         >
-          Import {preview.length > 0 ? `(${preview.length} phiên)` : ""}
+          Lưu dữ liệu {preview.length > 0 ? `(${preview.length} ngày)` : ""}
         </Button>
       </Space>
     );
@@ -348,7 +332,7 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
       case "import":
         return (
           <Space orientation="vertical" style={{ width: "100%" }} size="middle">
-            <Title level={5}>Import dữ liệu</Title>
+            <Title level={5}>Nhập dữ liệu học tập</Title>
 
             <Segmented
               value={importType}
@@ -381,14 +365,14 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
       case "export":
         return (
           <Space orientation="vertical" style={{ width: "100%" }} size="middle">
-            <Title level={5}>Export dữ liệu</Title>
+            <Title level={5}>Xuất dữ liệu học tập</Title>
             <Alert
               title="Thông tin"
               description={
                 <div className="space-y-2">
                   <p>Xuất toàn bộ dữ liệu của bạn ra file JSON để backup hoặc chuyển sang thiết bị khác.</p>
                   <p className="text-sm text-gray-500">
-                    File export sẽ bao gồm tất cả các phiên học và cài đặt của bạn.
+                    File xuất dữ liệu sẽ bao gồm tất cả các ngày học và cài đặt của bạn.
                   </p>
                 </div>
               }
@@ -421,7 +405,6 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
       }}
     >
       <div className="flex min-h-[400px]">
-        {/* Sidebar */}
         <div className="w-48 border-r border-gray-200 bg-gray-50">
           <Menu
             mode="inline"
@@ -432,7 +415,6 @@ export default function SettingsModal({ open, onClose, onSuccess }: SettingsModa
           />
         </div>
 
-        {/* Content */}
         <div className="flex-1 p-6">{renderContent()}</div>
       </div>
     </Modal>

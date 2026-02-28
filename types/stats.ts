@@ -2,7 +2,6 @@
  * Types for Stats components
  */
 
-// Chart data types
 export interface DailyChartData {
   date: string;
   label: string;
@@ -35,7 +34,6 @@ export interface AllTimeChartData {
   sessionCount: number;
 }
 
-// Base chart data (used generically)
 export interface ChartDataPoint {
   date?: string;
   week?: string;
@@ -48,21 +46,22 @@ export interface ChartDataPoint {
   daysStudied?: number;
 }
 
-// Custom Tooltip props
 export interface CustomTooltipPayload {
   payload: ChartDataPoint;
 }
 
-// Stats Card color types
-export type StatsCardColor = "blue" | "green" | "orange" | "purple" | "red" | "cyan";
+export type StatsCardColor =
+  | 'blue'
+  | 'green'
+  | 'orange'
+  | 'purple'
+  | 'red'
+  | 'cyan';
 
-// Stats Card format types
-export type StatsCardFormat = "duration" | "number" | "hours";
+export type StatsCardFormat = 'duration' | 'number' | 'hours';
 
-// Tab keys
-export type TabKey = "all-time" | "week" | "month" | "year";
+export type TabKey = 'all-time' | 'week' | 'month' | 'year';
 
-// Month date range
 export interface MonthDateRange {
   start: number;
   end: number;

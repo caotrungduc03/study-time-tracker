@@ -17,7 +17,6 @@ interface AllTimeStatsProps {
 }
 
 export function AllTimeStats({ stats }: AllTimeStatsProps) {
-  // Prepare chart data grouped by month for 2 most recent years
   const chartData = useMemo((): AllTimeChartData[] => {
     if (stats.length === 0) return [];
 
@@ -25,16 +24,13 @@ export function AllTimeStats({ stats }: AllTimeStatsProps) {
     const currentYear = now.year();
     const previousYear = currentYear - 1;
 
-    // Filter stats from last 2 years
     const lastTwoYearsStats = stats.filter((stat) => {
       const year = dayjs(stat.date).year();
       return year === currentYear || year === previousYear;
     });
 
-    // Group by year-month
     const monthlyData: Record<string, { totalSeconds: number; sessionCount: number }> = {};
 
-    // Initialize all 24 months (2 years)
     for (const year of [previousYear, currentYear]) {
       for (let month = 1; month <= 12; month++) {
         const key = `${year}-${String(month).padStart(2, "0")}`;
@@ -52,7 +48,6 @@ export function AllTimeStats({ stats }: AllTimeStatsProps) {
       monthlyData[key].sessionCount += stat.sessionCount;
     });
 
-    // Create chart data for 24 months
     const result: AllTimeChartData[] = [];
     for (const year of [previousYear, currentYear]) {
       const monthNames = ["T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12"];
@@ -72,7 +67,6 @@ export function AllTimeStats({ stats }: AllTimeStatsProps) {
     return result;
   }, [stats]);
 
-  // Calculate overall statistics
   const allTimeTotal = useMemo(() => {
     return stats.reduce((sum, stat) => sum + stat.totalSeconds, 0);
   }, [stats]);
@@ -103,7 +97,6 @@ export function AllTimeStats({ stats }: AllTimeStatsProps) {
 
   return (
     <Card title={`📊 ${allTimeTitle}`}>
-      {/* Summary Stats */}
       <Row gutter={[16, 16]} className="mb-6">
         <StatsCard label="Tổng thời gian" value={formatTime(allTimeTotal)} color="blue" format="number" />
         <StatsCard label="Tổng phiên học" value={allTimeSessions} color="green" format="number" />
@@ -115,7 +108,6 @@ export function AllTimeStats({ stats }: AllTimeStatsProps) {
         />
       </Row>
 
-      {/* Bar Chart */}
       <div className="bg-white rounded-lg p-4">
         <h3 className="font-semibold mb-4">Thống kê theo tháng</h3>
         {chartData.length > 0 ? (

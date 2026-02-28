@@ -20,18 +20,15 @@ export function StatsDashboard() {
   const [activeTab, setActiveTab] = useState<TabKey>("week");
   const [allTimeStats, setAllTimeStats] = useState<DailyStat[]>([]);
 
-  // Load all time stats
   useEffect(() => {
     const loadAllTimeStats = async () => {
       try {
-        // Get stats for the entire database
         const now = dayjs();
-        const startDate = "2020-01-01"; // Start from a past date to get all records
+        const startDate = "2020-01-01";
         const endDate = now.format("YYYY-MM-DD");
 
         const stats = await getSessionsByDateRange(startDate, endDate);
 
-        // Group by date and calculate stats
         const dailyStats = new Map<string, DailyStat>();
 
         stats.forEach((session) => {

@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { devtools } from "zustand/middleware";
 
 import type { StudySession } from "@/types";
 
@@ -30,23 +29,18 @@ const initialState: TimerState = {
   pauseTimestamp: 0,
 };
 
-export const useTimerStore = create<TimerStore>()(
-  devtools(
-    (set) => ({
-      ...initialState,
+export const useTimerStore = create<TimerStore>()((set) => ({
+  ...initialState,
 
-      setRunning: (isRunning) => set({ isRunning }),
+  setRunning: (isRunning) => set({ isRunning }),
 
-      setPaused: (isPaused) => set({ isPaused }),
+  setPaused: (isPaused) => set({ isPaused }),
 
-      setCurrentTime: (currentTime) => set({ currentTime }),
+  setCurrentTime: (currentTime) => set({ currentTime }),
 
-      setCurrentSession: (currentSession) => set({ currentSession }),
+  setCurrentSession: (currentSession) => set({ currentSession }),
 
-      setPauseTimestamp: (pauseTimestamp) => set({ pauseTimestamp }),
+  setPauseTimestamp: (pauseTimestamp) => set({ pauseTimestamp }),
 
-      resetTimer: () => set(initialState),
-    }),
-    { name: "TimerStore" },
-  ),
-);
+  resetTimer: () => set(initialState),
+}));

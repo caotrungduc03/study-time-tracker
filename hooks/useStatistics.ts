@@ -1,10 +1,14 @@
-"use client";
+'use client';
 
-import { useCallback,useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from 'react';
 
-import { getStatsForDateRange,getTodayStats } from "@/lib/db/operations";
-import { getCurrentWeekDates, getMonthDates, getYearDates } from "@/lib/time-utils";
-import type { DailyStat } from "@/types";
+import { getStatsForDateRange, getTodayStats } from '@/lib/db/operations';
+import {
+  getCurrentWeekDates,
+  getMonthDates,
+  getYearDates,
+} from '@/lib/time-utils';
+import type { DailyStat } from '@/types';
 
 export function useStatistics() {
   const [todayStats, setTodayStats] = useState<DailyStat | null>(null);
@@ -13,27 +17,24 @@ export function useStatistics() {
   const [yearStats, setYearStats] = useState<DailyStat[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Load today's statistics
   const loadTodayStats = useCallback(async () => {
     try {
       const stats = await getTodayStats();
       setTodayStats(stats);
     } catch (error) {
-      console.error("Failed to load today stats:", error);
+      console.error('Failed to load today stats:', error);
     }
   }, []);
 
-  // Load week statistics
   const loadWeekStats = useCallback(async () => {
     try {
       setLoading(true);
-      const weekDates = getCurrentWeekDates(1); // Monday as first day
+      const weekDates = getCurrentWeekDates(1);
       const startDate = weekDates[0];
       const endDate = weekDates[weekDates.length - 1];
 
       const stats = await getStatsForDateRange(startDate, endDate);
 
-      // Fill in missing dates with empty stats
       const fullWeekStats = weekDates.map((date) => {
         const existing = stats.find((s) => s.date === date);
         return (
@@ -55,13 +56,12 @@ export function useStatistics() {
 
       setWeekStats(fullWeekStats);
     } catch (error) {
-      console.error("Failed to load week stats:", error);
+      console.error('Failed to load week stats:', error);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Load month statistics
   const loadMonthStats = useCallback(async () => {
     try {
       setLoading(true);
@@ -73,13 +73,12 @@ export function useStatistics() {
       const stats = await getStatsForDateRange(startDate, endDate);
       setMonthStats(stats);
     } catch (error) {
-      console.error("Failed to load month stats:", error);
+      console.error('Failed to load month stats:', error);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Load year statistics
   const loadYearStats = useCallback(async () => {
     try {
       setLoading(true);
@@ -91,13 +90,12 @@ export function useStatistics() {
       const stats = await getStatsForDateRange(startDate, endDate);
       setYearStats(stats);
     } catch (error) {
-      console.error("Failed to load year stats:", error);
+      console.error('Failed to load year stats:', error);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Initial load
   useEffect(() => {
     loadTodayStats();
     loadWeekStats();
@@ -105,9 +103,13 @@ export function useStatistics() {
     loadYearStats();
   }, [loadTodayStats, loadWeekStats, loadMonthStats, loadYearStats]);
 
-  // Refresh function
   const refresh = useCallback(async () => {
-    await Promise.all([loadTodayStats(), loadWeekStats(), loadMonthStats(), loadYearStats()]);
+    await Promise.all([
+      loadTodayStats(),
+      loadWeekStats(),
+      loadMonthStats(),
+      loadYearStats(),
+    ]);
   }, [loadTodayStats, loadWeekStats, loadMonthStats, loadYearStats]);
 
   return {

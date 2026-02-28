@@ -24,7 +24,6 @@ export function useAppInitialization(): UseAppInitializationReturn {
   const [sessions, setSessions] = useState<StudySession[]>([]);
   const [todayStats, setTodayStats] = useState<DailyStat | null>(null);
 
-  // Load today's data
   const loadTodayData = async () => {
     try {
       const [sessionsData, statsData] = await Promise.all([getTodaySessions(), getTodayStats()]);
@@ -36,26 +35,21 @@ export function useAppInitialization(): UseAppInitializationReturn {
     }
   };
 
-  // Initialize app on mount
   useEffect(() => {
     async function init() {
       try {
         setIsLoading(true);
         setError(null);
 
-        // Initialize database
         await initializeDatabase();
 
-        // Cleanup any invalid sessions
         await cleanupInvalidSessions();
 
-        // Load settings
         const settings = await getSettings();
         if (settings) {
           setSettings(settings);
         }
 
-        // Load today's sessions and stats
         await loadTodayData();
       } catch (err) {
         const error = err instanceof Error ? err : new Error("Failed to initialize app");

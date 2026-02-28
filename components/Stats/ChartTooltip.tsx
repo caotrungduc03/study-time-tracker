@@ -35,7 +35,6 @@ export function CustomTooltip<T extends ChartDataPoint = ChartDataPoint>({
   return null;
 }
 
-// Formatter functions for different chart types
 export const dailyChartFormatter = (data: DailyChartData) => (
   <>
     <p className="font-semibold">

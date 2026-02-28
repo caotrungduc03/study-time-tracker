@@ -49,7 +49,6 @@ const CustomTooltip = ({
 };
 
 export function WeeklyChart({ stats }: WeeklyChartProps) {
-  // Prepare chart data
   const chartData = useMemo(() => {
     return stats.map((stat) => {
       const date = new Date(stat.date);
@@ -67,7 +66,6 @@ export function WeeklyChart({ stats }: WeeklyChartProps) {
     });
   }, [stats]);
 
-  // Calculate total for the week
   const weekTotal = useMemo(() => {
     return stats.reduce((sum, stat) => sum + stat.totalSeconds, 0);
   }, [stats]);
@@ -80,7 +78,6 @@ export function WeeklyChart({ stats }: WeeklyChartProps) {
     return weekSessions > 0 ? weekTotal / weekSessions : 0;
   }, [weekTotal, weekSessions]);
 
-  // Get week range for title
   const weekTitle = useMemo(() => {
     if (stats.length === 0) return "Tuần này";
     const firstDate = new Date(stats[0].date);
@@ -90,13 +87,11 @@ export function WeeklyChart({ stats }: WeeklyChartProps) {
     return `${firstDay} - ${lastDay}`;
   }, [stats]);
 
-  // Get max value for Y axis
   const maxHours = Math.max(...chartData.map((d) => d.hours), 1);
   const yAxisMax = Math.ceil(maxHours + 1);
 
   return (
     <Card title={`📈 ${weekTitle}`}>
-      {/* Summary Stats */}
       <Row gutter={[16, 16]} className="mb-6">
         <Col xs={12} sm={6}>
           <div className="bg-blue-50 p-4 rounded-lg">
@@ -118,7 +113,6 @@ export function WeeklyChart({ stats }: WeeklyChartProps) {
         </Col>
       </Row>
 
-      {/* Bar Chart */}
       <div className="bg-white rounded-lg p-4">
         <h3 className="font-semibold mb-4">Chi tiết từng ngày</h3>
         <ResponsiveContainer width="100%" height={300}>

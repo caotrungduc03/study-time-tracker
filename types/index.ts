@@ -1,55 +1,33 @@
-// Core Session Interface
 export interface StudySession {
-  // Primary key
   id: string; // UUID v4
-
-  // Time information
   startTime: string; // ISO 8601: "2024-01-20T14:30:00.000Z"
   endTime: string; // ISO 8601
   duration: number; // seconds
-
-  // Metadata
-  type: "normal" | "pomodoro-work" | "pomodoro-break" | "imported";
-  status: "completed" | "cancelled" | "in-progress";
-
-  // Optional fields
+  type: 'normal' | 'pomodoro-work' | 'pomodoro-break' | 'imported';
+  status: 'completed' | 'cancelled' | 'in-progress';
   notes?: string;
   tags?: string[];
-
-  // Timestamps
   createdAt: string;
   updatedAt: string;
-
-  // For indexing
   startDate?: string; // YYYY-MM-DD format for date-based queries
-
-  // For imported sessions (when startTime and endTime are not known)
-  isImported?: boolean; // Flag to indicate this is an imported session
+  isImported?: boolean;
 }
 
-// Settings Interface
 export interface AppSettings {
-  id: "global_settings";
-
-  // Pomodoro Settings
+  id: 'global_settings';
   pomodoro: {
     workDuration: number; // seconds, default: 1500 (25m)
     breakDuration: number; // seconds, default: 300 (5m)
-    autoStartBreak: boolean; // default: true
-    soundEnabled: boolean; // default: true
-    soundFile?: string; // URL to audio file
+    soundEnabled: boolean;
+    pomodoroEnabled: boolean;
   };
-
-  // App Settings
   app: {
-    theme: "light" | "dark" | "auto";
-    language: "vi" | "en";
+    theme: 'light' | 'dark' | 'auto';
+    language: 'vi' | 'en';
     firstDayOfWeek: 0 | 1; // 0: Sunday, 1: Monday
-    timeFormat: "12h" | "24h";
-    weekStartDate?: string; // ISO date for custom week start
+    timeFormat: '12h' | '24h';
+    weekStartDate?: string;
   };
-
-  // Notification Settings
   notifications: {
     pomodoroEnd: boolean;
     dailyGoal: boolean;
@@ -57,28 +35,17 @@ export interface AppSettings {
   };
 }
 
-// Statistics Interfaces
 export interface DailyStat {
-  id: string; // Format: "YYYY-MM-DD"
+  id: string; // "YYYY-MM-DD"
   date: string; // YYYY-MM-DD
-
-  // Summary
   totalSeconds: number;
   sessionCount: number;
-
-  // Breakdown by type
   normalSeconds: number;
   pomodoroWorkSeconds: number;
   pomodoroBreakSeconds: number;
-
-  // Session details
-  sessions: string[]; // Array of session IDs
-
-  // Calculations
+  sessions: string[];
   averageSessionDuration: number;
   longestSessionDuration: number;
-
-  // Metadata
   lastUpdated: string;
 }
 
@@ -101,72 +68,48 @@ export interface WeeklyStat {
   streak: number; // Number of consecutive study days
 }
 
-// Pomodoro State Machine
-export type PomodoroState =
-  | "idle"
-  | "work" // Working
-  | "work-paused" // Work paused
-  | "break" // Break time
-  | "break-paused" // Break paused
-  | "completed"; // Cycle completed
+export type PomodoroState = 'idle' | 'running' | 'paused';
 
-export interface PomodoroContext {
-  state: PomodoroState;
-  remainingSeconds: number;
-  currentSessionId?: string;
-  cycleCount: number;
-}
+export type PomodoroPhase = 'study' | 'break' | 'completed' | null;
 
-// App State
 export interface AppState {
-  // Timer state
   isRunning: boolean;
   currentTime: number; // seconds elapsed
   currentSession: StudySession | null;
-
-  // Pomodoro state
-  pomodoro: PomodoroContext;
-
-  // UI state
-  activeTab: "timer" | "stats" | "history";
-  selectedDate: string; // ISO date
-
-  // Data state
+  pomodoroState: PomodoroState;
+  activeTab: 'timer' | 'stats' | 'history';
+  selectedDate: string;
   sessions: StudySession[];
   dailyStats: DailyStat[];
   settings: AppSettings;
 }
 
-// Timeline Event Position
 export interface TimelineEventPosition {
-  startPosition: number; // 0-95 (slot index)
-  length: number; // number of slots
+  startPosition: number;
+  length: number;
   color: string;
   session: StudySession;
 }
 
-// Chart Data
 export interface ChartDataPoint {
   date: string;
   hours: number;
   seconds: number;
   label: string;
 }
-
-// Default Settings
 export const DEFAULT_SETTINGS: AppSettings = {
-  id: "global_settings",
+  id: 'global_settings',
   pomodoro: {
-    workDuration: 1500, // 25 minutes
-    breakDuration: 300, // 5 minutes
-    autoStartBreak: true,
+    workDuration: 1500,
+    breakDuration: 300,
     soundEnabled: true,
+    pomodoroEnabled: true,
   },
   app: {
-    theme: "auto",
-    language: "vi",
-    firstDayOfWeek: 1, // Monday
-    timeFormat: "24h",
+    theme: 'auto',
+    language: 'vi',
+    firstDayOfWeek: 1,
+    timeFormat: '24h',
   },
   notifications: {
     pomodoroEnd: true,
@@ -175,20 +118,19 @@ export const DEFAULT_SETTINGS: AppSettings = {
   },
 };
 
-// Constants
 export const EVENT_COLORS = {
-  normal: "#52c41a", // Green
-  "pomodoro-work": "#fa8c16", // Orange
-  "pomodoro-break": "#722ed1", // Purple
-  imported: "#13c2c2", // Cyan
-  active: "#1890ff", // Blue (currently studying)
+  normal: '#52c41a',
+  'pomodoro-work': '#fa8c16',
+  'pomodoro-break': '#722ed1',
+  imported: '#13c2c2',
+  active: '#1890ff',
 } as const;
 
 export const TIME_CONSTANTS = {
   SECONDS_PER_MINUTE: 60,
   MINUTES_PER_HOUR: 60,
   HOURS_PER_DAY: 24,
-  SLOTS_PER_HOUR: 60, // 1-minute slots (changed from 12)
-  TOTAL_SLOTS: 1440, // 24 hours * 60 slots (changed from 288)
-  SLOT_DURATION_MINUTES: 1, // Changed from 5
+  SLOTS_PER_HOUR: 60,
+  TOTAL_SLOTS: 1440,
+  SLOT_DURATION_MINUTES: 1,
 } as const;

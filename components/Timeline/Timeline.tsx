@@ -14,7 +14,6 @@ interface TimelineProps {
 }
 
 export function Timeline({ sessions, currentSession, onEventClick }: TimelineProps) {
-  // Calculate positions for all sessions
   const events = useMemo(() => {
     const allSessions = currentSession ? [...sessions, currentSession] : sessions;
 
@@ -30,10 +29,9 @@ export function Timeline({ sessions, currentSession, onEventClick }: TimelinePro
     });
   }, [sessions, currentSession]);
 
-  // Generate timeline grid (24 hours, 4 slots per hour)
   const timeSlots = useMemo(() => {
     const slots = [];
-    for (let hour = 0; hour < TIME_CONSTANTS.HOURS_PER_DAY; hour++) {
+    for (let hour = 0; hour <= TIME_CONSTANTS.HOURS_PER_DAY; hour++) {
       slots.push({
         hour,
         label: `${hour.toString().padStart(2, "0")}:00`,
@@ -45,7 +43,6 @@ export function Timeline({ sessions, currentSession, onEventClick }: TimelinePro
   return (
     <Card title="Timeline hôm nay" className="w-full">
       <div className="relative">
-        {/* Time labels */}
         <div className="flex justify-between mb-2 text-xs text-gray-500">
           {timeSlots
             .filter((_, i) => i % 3 === 0)
@@ -54,10 +51,7 @@ export function Timeline({ sessions, currentSession, onEventClick }: TimelinePro
             ))}
         </div>
 
-        {/* Timeline grid */}
         <div className="relative h-40 bg-gray-100 rounded-lg overflow-hidden">
-          {/* Changed from h-24 to h-40 for 1-min slots */}
-          {/* Grid lines */}
           <div className="absolute inset-0 flex">
             {Array.from({ length: TIME_CONSTANTS.TOTAL_SLOTS }).map((_, index) => (
               <div
@@ -67,7 +61,6 @@ export function Timeline({ sessions, currentSession, onEventClick }: TimelinePro
             ))}
           </div>
 
-          {/* Events */}
           {events.map((event) => {
             const leftPercent = (event.startPosition / TIME_CONSTANTS.TOTAL_SLOTS) * 100;
             const widthPercent = (event.length / TIME_CONSTANTS.TOTAL_SLOTS) * 100;
@@ -99,7 +92,6 @@ export function Timeline({ sessions, currentSession, onEventClick }: TimelinePro
             );
           })}
 
-          {/* Current time indicator */}
           <CurrentTimeIndicator />
         </div>
       </div>
@@ -107,7 +99,6 @@ export function Timeline({ sessions, currentSession, onEventClick }: TimelinePro
   );
 }
 
-// Current time indicator component
 function CurrentTimeIndicator() {
   const [currentPosition, setCurrentPosition] = React.useState(0);
 

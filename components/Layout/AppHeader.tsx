@@ -10,7 +10,7 @@ import SettingsModal from "@/components/SettingsModal";
 import { ROUTES } from "@/constants";
 import { getAssetPath } from "@/lib/url-utils";
 
-const { Header: AntHeader } = Layout;
+const { Header } = Layout;
 
 /**
  * Check if current pathname matches a route
@@ -29,13 +29,12 @@ export function AppHeader() {
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
   const handleSettingsSuccess = () => {
-    // Reload the page to refresh data
     window.location.reload();
   };
 
   return (
     <>
-      <AntHeader className="!bg-white shadow-sm !h-16">
+      <Header className="!bg-white shadow-sm !h-16">
         <div className="container mx-auto px-4 flex items-center justify-between h-full">
           <div className="flex items-center cursor-pointer" onClick={() => router.push(ROUTES.HOME)}>
             <Image
@@ -48,7 +47,6 @@ export function AppHeader() {
             />
           </div>
 
-          {/* Navigation Buttons - changes based on route */}
           {isCurrentRoute(pathname, ROUTES.HOME) && (
             <Space>
               <Button type="primary" icon={<BarChartOutlined />} onClick={() => router.push(ROUTES.STATS)}>
@@ -66,7 +64,7 @@ export function AppHeader() {
             </Space>
           )}
         </div>
-      </AntHeader>
+      </Header>
 
       <SettingsModal
         open={settingsModalOpen}

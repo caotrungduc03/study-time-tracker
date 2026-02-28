@@ -24,12 +24,7 @@ export const TodayStatsCard: React.FC<TodayStatsCardProps> = ({
         </Col>
         <Col xs={24} sm={8}>
           <Statistic
-            title={
-              <span className="flex items-center gap-1">
-                Số phiên học
-                <InfoTooltip title="Chỉ tính các phiên học >= 1 phút. Phiên < 1 phút sẽ bị bỏ qua." />
-              </span>
-            }
+            title={<span className="flex items-center gap-1">Số phiên học</span>}
             value={sessionCount}
             suffix="phiên"
           />

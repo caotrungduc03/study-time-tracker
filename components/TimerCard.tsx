@@ -1,9 +1,7 @@
 "use client";
 
-import { Card, Tag } from "antd";
+import { Card } from "antd";
 import React from "react";
-
-import type { StudySession } from "@/types";
 
 import { ControlButtons } from "./ControlButtons";
 import { TimerDisplay } from "./TimerDisplay";
@@ -12,49 +10,23 @@ interface TimerCardProps {
   currentTime: number;
   isRunning: boolean;
   isPaused?: boolean;
-  sessionType?: StudySession["type"];
-  pomodoroActive?: boolean;
   onStart: () => void;
   onPause?: () => void;
   onResume?: () => void;
-  onStop: () => void;
   onReset?: () => void;
-  onCancel?: () => void;
 }
 
 export function TimerCard({
   currentTime,
   isRunning,
   isPaused = false,
-  sessionType,
-  pomodoroActive = false,
   onStart,
   onPause,
   onResume,
-  onStop,
   onReset,
-  onCancel,
 }: TimerCardProps) {
-  // Determine if this is a Pomodoro session
-  const isPomodoroWork = sessionType === "pomodoro-work";
-  const isPomodoroBreak = sessionType === "pomodoro-break";
-  const isPomodoro = isPomodoroWork || isPomodoroBreak;
-
   return (
-    <Card
-      title={
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">⏱️</span>
-          <span>Timer</span>
-          {isPomodoro && (
-            <Tag color={isPomodoroWork ? "orange" : "purple"} className="ml-2">
-              🍅 {isPomodoroWork ? "Pomodoro - Đang học" : "Pomodoro - Đang nghỉ"}
-            </Tag>
-          )}
-        </div>
-      }
-      className="h-full"
-    >
+    <Card className="w-full">
       <div className="flex flex-col items-center justify-center min-h-[300px]">
         <TimerDisplay seconds={currentTime} />
         <ControlButtons
@@ -64,10 +36,7 @@ export function TimerCard({
           onStart={onStart}
           onPause={onPause}
           onResume={onResume}
-          onStop={onStop}
           onReset={onReset}
-          onCancel={onCancel}
-          disableStart={pomodoroActive}
         />
       </div>
     </Card>

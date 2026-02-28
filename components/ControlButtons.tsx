@@ -1,14 +1,10 @@
 "use client";
 
-import {
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  PauseCircleOutlined,
-  PlayCircleOutlined,
-  ReloadOutlined,
-} from "@ant-design/icons";
+import { PauseCircleOutlined, PlayCircleOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Button, Space } from "antd";
-import React from "react";
+import React, { useCallback } from "react";
+
+import { getAssetPath } from "@/lib/url-utils";
 
 interface ControlButtonsProps {
   isRunning: boolean;
@@ -17,11 +13,7 @@ interface ControlButtonsProps {
   onStart: () => void;
   onPause?: () => void;
   onResume?: () => void;
-  onStop: () => void;
   onReset?: () => void;
-  onCancel?: () => void;
-  disableStart?: boolean;
-  disableStop?: boolean;
 }
 
 export function ControlButtons({
@@ -31,12 +23,35 @@ export function ControlButtons({
   onStart,
   onPause,
   onResume,
-  onStop,
   onReset,
-  onCancel,
-  disableStart = false,
-  disableStop = false,
 }: ControlButtonsProps) {
+  const playClick = useCallback(() => {
+    try {
+      const audio = new Audio(getAssetPath("/sounds/button.wav"));
+      audio.volume = 0.5;
+      audio.play().catch(() => {});
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleStart = useCallback(() => {
+    playClick();
+    onStart();
+  }, [playClick, onStart]);
+  const handlePause = useCallback(() => {
+    playClick();
+    onPause?.();
+  }, [playClick, onPause]);
+  const handleResume = useCallback(() => {
+    playClick();
+    onResume?.();
+  }, [playClick, onResume]);
+  const handleReset = useCallback(() => {
+    playClick();
+    onReset?.();
+  }, [playClick, onReset]);
+
   return (
     <div className="flex items-center justify-center py-6">
       <Space size="middle">
@@ -44,62 +59,36 @@ export function ControlButtons({
           <Button
             type="primary"
             icon={<PlayCircleOutlined />}
-            onClick={onStart}
-            disabled={disableStart}
-            className="min-w-[200px] h-[56px] text-lg font-semibold"
+            onClick={handleStart}
+            className="h-[56px] text-lg font-semibold"
           >
-            Bắt đầu học
+            Bắt đầu
           </Button>
-        ) : (
-          <Space size="middle">
-            {!isPaused && onPause ? (
-              <Button
-                icon={<PauseCircleOutlined />}
-                onClick={onPause}
-                disabled={disableStop}
-                className="min-w-[100px] h-[56px] text-lg font-semibold"
-              >
-                Tạm dừng
-              </Button>
-            ) : isPaused && onResume ? (
-              <Button
-                type="default"
-                icon={<PlayCircleOutlined />}
-                onClick={onResume}
-                className="min-w-[100px] h-[56px] text-lg font-semibold bg-blue-500 hover:bg-blue-600 text-white border-blue-500"
-              >
-                Tiếp tục
-              </Button>
-            ) : null}
-            {currentTime >= 60 && (
-              <Button
-                type="primary"
-                icon={<CheckCircleOutlined />}
-                onClick={onStop}
-                disabled={disableStop}
-                className="min-w-[100px] h-[56px] text-lg font-semibold bg-green-600 hover:bg-green-700 border-green-600"
-              >
-                Hoàn thành
-              </Button>
-            )}
-            {onCancel && (
-              <Button
-                danger
-                icon={<CloseCircleOutlined />}
-                onClick={onCancel}
-                disabled={disableStop}
-                className="min-w-[100px] h-[56px] text-lg font-semibold"
-              >
-                Hủy bỏ
-              </Button>
-            )}
-          </Space>
-        )}
+        ) : !isPaused && onPause ? (
+          <Button icon={<PauseCircleOutlined />} onClick={handlePause} className="h-[56px] text-lg font-semibold">
+            Tạm dừng
+          </Button>
+        ) : isPaused && onResume ? (
+          <Button
+            type="primary"
+            icon={<PlayCircleOutlined />}
+            onClick={handleResume}
+            className="h-[56px] text-lg font-semibold bg-blue-500 hover:bg-blue-600 text-white border-blue-500"
+          >
+            Tiếp tục
+          </Button>
+        ) : null}
 
-        {/* Reset button - only show when stopped and there's time to reset */}
-        {!isRunning && currentTime > 0 && onReset && (
-          <Button type="default" icon={<ReloadOutlined />} onClick={onReset} className="w-full">
-            Reset Timer
+        {onReset && (
+          <Button
+            type="default"
+            danger
+            icon={<ReloadOutlined />}
+            onClick={handleReset}
+            disabled={currentTime === 0 && !isRunning}
+            className="h-[56px] text-lg font-semibold"
+          >
+            Reset
           </Button>
         )}
       </Space>
