@@ -158,7 +158,7 @@ function PomodoroSettingsCard({ disabled = false }: PomodoroSettingsCardProps) {
           />
         </div>
 
-        <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+        <div className="h-fit space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
           <div className="flex min-w-56 items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <NotificationOutlined className="text-gray-400" />

@@ -2,14 +2,10 @@ export interface StudySession {
   id: string; // UUID v4
   startTime: string; // ISO 8601: "2024-01-20T14:30:00.000Z"
   endTime: string; // ISO 8601
-  duration: number; // seconds
   type: 'normal' | 'pomodoro-work' | 'pomodoro-break' | 'imported';
   status: 'completed' | 'cancelled' | 'in-progress';
-  notes?: string;
-  tags?: string[];
   createdAt: string;
   updatedAt: string;
-  startDate?: string; // YYYY-MM-DD format for date-based queries
   isImported?: boolean;
 }
 

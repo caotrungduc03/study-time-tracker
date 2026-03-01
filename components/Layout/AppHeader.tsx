@@ -1,22 +1,26 @@
-"use client";
+'use client';
 
-import { ArrowLeftOutlined, BarChartOutlined, SettingOutlined } from "@ant-design/icons";
-import { Button, Layout, Space } from "antd";
-import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import {
+  ArrowLeftOutlined,
+  BarChartOutlined,
+  SettingOutlined,
+} from '@ant-design/icons';
+import { Button, Layout, Space } from 'antd';
+import Image from 'next/image';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState } from 'react';
 
-import SettingsModal from "@/components/SettingsModal";
-import { ROUTES } from "@/constants";
-import { getAssetPath } from "@/lib/url-utils";
+import SettingsModal from '@/components/SettingsModal';
+import { ROUTES } from '@/constants';
+import { getAssetPath } from '@/lib/url-utils';
 
 const { Header } = Layout;
 
-/**
- * Check if current pathname matches a route
- * Supports both exact match and prefix match with startsWith
- */
-function isCurrentRoute(pathname: string, route: string, exact: boolean = true): boolean {
+function isCurrentRoute(
+  pathname: string,
+  route: string,
+  exact: boolean = true,
+): boolean {
   if (exact) {
     return pathname === route;
   }
@@ -34,33 +38,50 @@ export function AppHeader() {
 
   return (
     <>
-      <Header className="!bg-white shadow-sm !h-16">
-        <div className="container mx-auto px-4 flex items-center justify-between h-full">
-          <div className="flex items-center cursor-pointer" onClick={() => router.push(ROUTES.HOME)}>
+      <Header className="!h-16 !bg-white shadow-sm">
+        <div className="container mx-auto flex h-full items-center justify-between px-4">
+          <div
+            className="flex cursor-pointer items-center"
+            onClick={() => router.push(ROUTES.HOME)}
+          >
             <Image
-              src={getAssetPath("/images/logo.png")}
+              src={getAssetPath('/images/logo.png')}
               alt="Study Time Tracker Logo"
               width={200}
               height={60}
-              className="w-15 object-cover object-left rounded-lg sm:w-auto"
+              className="w-15 rounded-lg object-cover object-left sm:w-auto"
               priority
             />
           </div>
 
           {isCurrentRoute(pathname, ROUTES.HOME) && (
             <Space>
-              <Button type="primary" icon={<BarChartOutlined />} onClick={() => router.push(ROUTES.STATS)}>
+              <Button
+                type="primary"
+                icon={<BarChartOutlined />}
+                onClick={() => router.push(ROUTES.STATS)}
+              >
                 Thống kê
               </Button>
-              <Button icon={<SettingOutlined />} onClick={() => setSettingsModalOpen(true)} />
+              <Button
+                icon={<SettingOutlined />}
+                onClick={() => setSettingsModalOpen(true)}
+              />
             </Space>
           )}
           {isCurrentRoute(pathname, ROUTES.STATS) && (
             <Space>
-              <Button type="primary" icon={<ArrowLeftOutlined />} onClick={() => router.push(ROUTES.HOME)}>
+              <Button
+                type="primary"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => router.push(ROUTES.HOME)}
+              >
                 Quay lại
               </Button>
-              <Button icon={<SettingOutlined />} onClick={() => setSettingsModalOpen(true)} />
+              <Button
+                icon={<SettingOutlined />}
+                onClick={() => setSettingsModalOpen(true)}
+              />
             </Space>
           )}
         </div>

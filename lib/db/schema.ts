@@ -10,7 +10,7 @@ export class StudyTrackerDB extends Dexie {
     super('study-tracker-db');
 
     this.version(1).stores({
-      sessions: 'id, startTime, type, startDate, status',
+      sessions: 'id, startTime, type, status',
       settings: 'id',
     });
   }
@@ -53,7 +53,8 @@ export async function initializeDatabase(): Promise<void> {
 }
 
 export function getDateString(date: Date = new Date()): string {
-  return date.toISOString().split('T')[0];
+  const pad = (n: number) => (n < 10 ? '0' + n : n.toString());
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 export function toISOString(date: Date = new Date()): string {

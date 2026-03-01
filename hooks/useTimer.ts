@@ -1,14 +1,28 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
-import { completeSession, createSession, deleteSession } from "@/lib/db/operations";
-import { useTimerStore } from "@/store/useTimerStore";
-import type { StudySession } from "@/types";
+import {
+  completeSessionWithDuration,
+  deleteSession,
+  saveOrUpdateSession,
+} from '@/lib/db/operations';
+import { getDateString, toISOString } from '@/lib/db/schema';
+import { useTimerStore } from '@/store/useTimerStore';
+import type { StudySession } from '@/types';
 
 export function useTimer() {
-  const { isRunning, isPaused, currentTime, currentSession, setRunning, setPaused, setCurrentTime, setCurrentSession } =
-    useTimerStore();
+  const {
+    isRunning,
+    isPaused,
+    currentTime,
+    currentSession,
+    setRunning,
+    setPaused,
+    setCurrentTime,
+    setCurrentSession,
+  } = useTimerStore();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const driftCheckRef = useRef<number>(0);
 
@@ -25,12 +39,36 @@ export function useTimer() {
   const currentTimeRef = useRef<number>(0);
 
   /**
-   * Start the timer — always creates a "normal" session
+   * savedToDBRef: whether the current session has been written to DB (first pause).
+   * False on start; set to true after the first saveOrUpdateSession call.
+   */
+  const savedToDBRef = useRef<boolean>(false);
+
+  /**
+   * lastAutoSaveRef: totalTime (seconds) at the last auto-save checkpoint.
+   * Reset on start / cancel / reset so the first auto-save fires at exactly +60s.
+   */
+  const lastAutoSaveRef = useRef<number>(0);
+
+  /**
+   * Start the timer — create session in memory only, no DB write yet.
+   * The session is persisted only when the user pauses.
    */
   const start = useCallback(async () => {
     try {
-      const session = await createSession("normal");
+      const now = new Date();
+      const session: StudySession = {
+        id: uuidv4(),
+        startTime: toISOString(now),
+        endTime: '',
+        type: 'normal',
+        status: 'in-progress',
+        createdAt: toISOString(now),
+        updatedAt: toISOString(now),
+      };
 
+      savedToDBRef.current = false;
+      lastAutoSaveRef.current = 0;
       driftCheckRef.current = Date.now();
 
       setCurrentSession(session);
@@ -41,22 +79,28 @@ export function useTimer() {
 
       return session;
     } catch (error) {
-      console.error("Failed to start timer:", error);
+      console.error('Failed to start timer:', error);
       throw error;
     }
   }, [setRunning, setPaused, setCurrentTime, setCurrentSession]);
 
   /**
-   * Stop the timer and complete the session
+   * Stop the timer and complete the session.
+   * Only writes to DB if the session was previously saved (i.e. paused at least once).
    */
   const stop = useCallback(async () => {
     if (!currentSession) {
-      console.warn("No active session to stop");
+      console.warn('No active session to stop');
       return;
     }
 
     try {
-      await completeSession(currentSession.id);
+      if (savedToDBRef.current) {
+        await completeSessionWithDuration(
+          currentSession.id,
+          currentTimeRef.current,
+        );
+      }
 
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -64,12 +108,13 @@ export function useTimer() {
       }
 
       accumulatedTimeRef.current = currentTimeRef.current;
+      savedToDBRef.current = false;
 
       setRunning(false);
       setPaused(false);
       setCurrentSession(null);
     } catch (error) {
-      console.error("Failed to stop timer:", error);
+      console.error('Failed to stop timer:', error);
       throw error;
     }
   }, [currentSession, setRunning, setPaused, setCurrentSession]);
@@ -95,13 +140,16 @@ export function useTimer() {
   );
 
   /**
-   * Cancel current session without saving
+   * Cancel current session without saving.
+   * Only deletes from DB if it was previously saved.
    */
   const cancel = useCallback(async () => {
     if (!currentSession) return;
 
     try {
-      await deleteSession(currentSession.id);
+      if (savedToDBRef.current) {
+        await deleteSession(currentSession.id);
+      }
 
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -109,25 +157,37 @@ export function useTimer() {
       }
 
       accumulatedTimeRef.current = currentTimeRef.current;
+      savedToDBRef.current = false;
+      lastAutoSaveRef.current = 0;
 
       setRunning(false);
       setPaused(false);
       setCurrentSession(null);
     } catch (error) {
-      console.error("Failed to cancel session:", error);
+      console.error('Failed to cancel session:', error);
       throw error;
     }
   }, [currentSession, setRunning, setPaused, setCurrentSession]);
 
   /**
-   * Pause the timer
+   * Pause the timer and persist accumulated time to DB.
+   * Creates the session record on first pause; updates duration on subsequent pauses.
    */
-  const pause = useCallback(() => {
-    if (isRunning && !isPaused) {
-      accumulatedTimeRef.current = currentTimeRef.current;
+  const pause = useCallback(async () => {
+    if (isRunning && !isPaused && currentSession) {
+      const accTime = currentTimeRef.current;
+      accumulatedTimeRef.current = accTime;
+
+      try {
+        await saveOrUpdateSession(currentSession, accTime);
+        savedToDBRef.current = true;
+      } catch (error) {
+        console.error('Failed to save session on pause:', error);
+      }
+
       setPaused(true);
     }
-  }, [isRunning, isPaused, setPaused]);
+  }, [isRunning, isPaused, currentSession, setPaused]);
 
   /**
    * Resume the timer
@@ -168,6 +228,21 @@ export function useTimer() {
           setCurrentTime(totalTime);
         }
 
+        // Auto-save every 60 seconds of accumulated time
+        if (totalTime - lastAutoSaveRef.current >= 60) {
+          lastAutoSaveRef.current = totalTime;
+          const activeSession = useTimerStore.getState().currentSession;
+          if (activeSession) {
+            saveOrUpdateSession(activeSession, totalTime)
+              .then(() => {
+                savedToDBRef.current = true;
+              })
+              .catch((err) => {
+                console.error('Auto-save failed:', err);
+              });
+          }
+        }
+
         if (Date.now() - driftCheckRef.current > 10 * 60 * 1000) {
           driftCheckRef.current = Date.now();
         }
@@ -187,11 +262,13 @@ export function useTimer() {
   }, [isRunning, isPaused, setCurrentTime]);
 
   /**
-   * Reset the timer — clear accumulated time and ref
+   * Reset the timer — clear accumulated time and refs
    */
   const resetTimer = useCallback(() => {
     accumulatedTimeRef.current = 0;
     currentTimeRef.current = 0;
+    savedToDBRef.current = false;
+    lastAutoSaveRef.current = 0;
   }, []);
 
   return {

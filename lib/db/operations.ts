@@ -15,12 +15,10 @@ export async function createSession(
     id: uuidv4(),
     startTime: toISOString(now),
     endTime: '', // Will be set when session ends
-    duration: 0,
     type,
     status: 'in-progress',
     createdAt: toISOString(now),
     updatedAt: toISOString(now),
-    startDate: getDateString(now),
   };
 
   await db.sessions.add(session);
@@ -65,12 +63,9 @@ export async function completeSession(
   }
 
   const endTime = new Date();
-  const startTime = new Date(session.startTime);
-  const duration = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
 
   await db.sessions.update(id, {
     endTime: toISOString(endTime),
-    duration,
     status: 'completed',
     updatedAt: toISOString(),
   });
@@ -96,6 +91,57 @@ export async function deleteSession(id: string): Promise<void> {
 }
 
 /**
+ * Save or update a session with accumulated duration (called on pause).
+ * Creates the record if it does not exist yet; otherwise only updates endTime.
+ */
+export async function saveOrUpdateSession(
+  session: StudySession,
+  duration: number,
+): Promise<void> {
+  const endTime = new Date(
+    new Date(session.startTime).getTime() + duration * 1000,
+  ).toISOString();
+
+  const existing = await db.sessions.get(session.id);
+  if (!existing) {
+    await db.sessions.add({
+      ...session,
+      endTime,
+      updatedAt: toISOString(),
+    });
+  } else {
+    await db.sessions.update(session.id, {
+      endTime,
+      updatedAt: toISOString(),
+    });
+  }
+}
+
+/**
+ * Complete a session using an explicitly supplied accumulated duration.
+ * Returns undefined (without throwing) when the session was never saved to DB.
+ */
+export async function completeSessionWithDuration(
+  id: string,
+  duration: number,
+): Promise<StudySession | undefined> {
+  const session = await db.sessions.get(id);
+  if (!session) return undefined;
+
+  const endTime = new Date(
+    new Date(session.startTime).getTime() + duration * 1000,
+  ).toISOString();
+
+  await db.sessions.update(id, {
+    endTime,
+    status: 'completed',
+    updatedAt: toISOString(),
+  });
+
+  return db.sessions.get(id);
+}
+
+/**
  * Get session by ID
  */
 export async function getSession(
@@ -109,9 +155,18 @@ export async function getSession(
  */
 export async function getSessionsByDate(date: string): Promise<StudySession[]> {
   return db.sessions
-    .where('startDate')
-    .equals(date)
-    .and((session) => session.status === 'completed')
+    .filter((session) => {
+      const isStatusValid =
+        session.status === 'completed' || session.status === 'in-progress';
+      if (!isStatusValid) return false;
+
+      const isStartMatch = getDateString(new Date(session.startTime)) === date;
+      const isEndMatch = session.endTime
+        ? getDateString(new Date(session.endTime)) === date
+        : false;
+
+      return isStartMatch || isEndMatch || session.status === 'in-progress';
+    })
     .sortBy('startTime');
 }
 
@@ -123,9 +178,21 @@ export async function getSessionsByDateRange(
   endDate: string,
 ): Promise<StudySession[]> {
   return db.sessions
-    .where('startDate')
-    .between(startDate, endDate, true, true)
-    .and((session) => session.status === 'completed')
+    .filter((session) => {
+      // Dù qua ngày thì session đang chạy vẫn cần được lấy
+      if (session.status === 'in-progress') return true;
+      if (session.status !== 'completed') return false;
+
+      const sDate = getDateString(new Date(session.startTime));
+      const eDate = session.endTime
+        ? getDateString(new Date(session.endTime))
+        : '';
+
+      return (
+        (sDate >= startDate && sDate <= endDate) ||
+        (eDate >= startDate && eDate <= endDate)
+      );
+    })
     .sortBy('startTime');
 }
 
@@ -163,6 +230,7 @@ export async function getUnfinishedSessions(): Promise<StudySession[]> {
  */
 export async function getTodaySessions(): Promise<StudySession[]> {
   const today = getDateString();
+  console.log({ today });
   return getSessionsByDate(today);
 }
 
@@ -236,26 +304,38 @@ export async function calculateDailyStats(date: string): Promise<DailyStat> {
   };
 
   sessions.forEach((session) => {
-    stat.totalSeconds += session.duration;
+    let sessionDuration = 0;
+    if (session.endTime && session.startTime) {
+      sessionDuration = Math.max(
+        0,
+        Math.floor(
+          (new Date(session.endTime).getTime() -
+            new Date(session.startTime).getTime()) /
+            1000,
+        ),
+      );
+    }
+
+    stat.totalSeconds += sessionDuration;
     stat.sessions.push(session.id);
 
     switch (session.type) {
       case 'normal':
-        stat.normalSeconds += session.duration;
+        stat.normalSeconds += sessionDuration;
         break;
       case 'pomodoro-work':
-        stat.pomodoroWorkSeconds += session.duration;
+        stat.pomodoroWorkSeconds += sessionDuration;
         break;
       case 'pomodoro-break':
-        stat.pomodoroBreakSeconds += session.duration;
+        stat.pomodoroBreakSeconds += sessionDuration;
         break;
       case 'imported':
-        stat.normalSeconds += session.duration;
+        stat.normalSeconds += sessionDuration;
         break;
     }
 
-    if (session.duration > stat.longestSessionDuration) {
-      stat.longestSessionDuration = session.duration;
+    if (sessionDuration > stat.longestSessionDuration) {
+      stat.longestSessionDuration = sessionDuration;
     }
   });
 
@@ -295,7 +375,7 @@ export async function getStatsForDateRange(
 
   const sessionsByDate = new Map<string, StudySession[]>();
   sessions.forEach((session) => {
-    const date = session.startDate!;
+    const date = getDateString(new Date(session.startTime));
     if (!sessionsByDate.has(date)) {
       sessionsByDate.set(date, []);
     }
@@ -321,18 +401,17 @@ export async function importSession(
 
   const [year, month, day] = date.split('-').map(Number);
   const localDate = new Date(year, month - 1, day, 12, 0, 0);
+  const endTimeLocal = new Date(localDate.getTime() + durationSeconds * 1000);
 
   const session: StudySession = {
     id: uuidv4(),
     startTime: localDate.toISOString(),
-    endTime: localDate.toISOString(),
-    duration: durationSeconds,
+    endTime: endTimeLocal.toISOString(),
     type: 'imported',
     status: 'completed',
     isImported: true,
     createdAt: toISOString(now),
     updatedAt: toISOString(now),
-    startDate: date,
   };
 
   await db.sessions.add(session);

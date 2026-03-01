@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import PomodoroSettingsCard from '@/components/PomodoroSettingsCard';
 import { Timeline } from '@/components/Timeline/Timeline';
@@ -12,6 +12,8 @@ import { cleanupInvalidSessions } from '@/lib/db/operations';
 import { usePomodoroStore } from '@/store/usePomodoroStore';
 import { useTimerStore } from '@/store/useTimerStore';
 
+const DB_REFRESH_INTERVAL = 60;
+
 export default function Home() {
   const { setRunning, setPaused, setCurrentTime, setCurrentSession } =
     useTimerStore();
@@ -20,11 +22,37 @@ export default function Home() {
   const pomodoro = usePomodoro();
   const { sessions, refreshData } = useAppInitialization();
 
+  const lastRefreshTimeRef = useRef<number>(0);
+
   useEffect(() => {
     if (timer.isRunning && !timer.isPaused) {
       pomodoro.tick(timer.currentTime);
     }
   }, [timer.currentTime, timer.isRunning, timer.isPaused, pomodoro]);
+
+  useEffect(() => {
+    if (!timer.isRunning || timer.isPaused) return;
+
+    const currentTime = timer.currentTime;
+
+    if (currentTime - lastRefreshTimeRef.current >= DB_REFRESH_INTERVAL) {
+      lastRefreshTimeRef.current = currentTime;
+      refreshData().catch((err) => {
+        console.error('Auto-refresh DB failed:', err);
+      });
+    }
+  }, [timer.currentTime, timer.isRunning, timer.isPaused, refreshData]);
+
+  useEffect(() => {
+    if (!timer.isRunning) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [timer.isRunning]);
 
   const handleStart = async () => {
     try {
@@ -34,9 +62,9 @@ export default function Home() {
     }
   };
 
-  const handlePause = () => {
+  const handlePause = async () => {
     try {
-      timer.pause();
+      await timer.pause();
     } catch (error) {
       console.error('Failed to pause timer:', error);
     }
@@ -62,6 +90,7 @@ export default function Home() {
       setCurrentSession(null);
 
       timer.resetTimer();
+      lastRefreshTimeRef.current = 0;
 
       resetPomodoro();
 
@@ -89,7 +118,11 @@ export default function Home() {
         onReset={handleReset}
       />
 
-      <Timeline sessions={sessions} currentSession={timer.currentSession} />
+      <Timeline
+        sessions={sessions}
+        currentSession={timer.currentSession}
+        currentTime={timer.currentTime}
+      />
     </div>
   );
 }

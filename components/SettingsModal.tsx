@@ -192,7 +192,7 @@ export default function SettingsModal({
       }
     };
     reader.readAsText(file);
-    return false; // Prevent auto upload
+    return false;
   };
 
   const handleExport = async () => {

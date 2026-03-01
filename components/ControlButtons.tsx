@@ -36,9 +36,7 @@ export function ControlButtons({
       const audio = new Audio(getAssetPath('/sounds/button.wav'));
       audio.volume = 0.5;
       audio.play().catch(() => {});
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, []);
 
   const handleStart = useCallback(() => {

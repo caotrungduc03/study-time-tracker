@@ -4,12 +4,27 @@ import isoWeek from 'dayjs/plugin/isoWeek';
 import weekday from 'dayjs/plugin/weekday';
 import weekOfYear from 'dayjs/plugin/weekOfYear';
 
-import { TIME_CONSTANTS } from '@/types';
+import { StudySession, TIME_CONSTANTS } from '@/types';
 
 dayjs.extend(weekday);
 dayjs.extend(isoWeek);
 dayjs.extend(weekOfYear);
 dayjs.extend(dayOfYear);
+
+/**
+ * Lấy duration của một session dựa trên startTime và endTime
+ */
+export function getSessionDuration(session: StudySession): number {
+  if (!session.endTime || !session.startTime) return 0;
+  return Math.max(
+    0,
+    Math.floor(
+      (new Date(session.endTime).getTime() -
+        new Date(session.startTime).getTime()) /
+        1000,
+    ),
+  );
+}
 
 /**
  * Format seconds to human-readable duration (e.g., "1h 30m", "45m", "30s")
@@ -26,7 +41,7 @@ export function formatDuration(seconds: number): string {
   const parts: string[] = [];
   if (hours > 0) parts.push(`${hours}h`);
   if (minutes > 0) parts.push(`${minutes}m`);
-  if (secs > 0 && hours === 0) parts.push(`${secs}s`);
+  if (secs > 0) parts.push(`${secs}s`);
 
   return parts.join(' ');
 }
@@ -59,10 +74,10 @@ export function getDateString(date: Date = new Date()): string {
 }
 
 /**
- * Get time string in HH:MM format
+ * Get time string in HH:mm:ss format
  */
 export function getTimeString(date: Date = new Date()): string {
-  return dayjs(date).format('HH:mm');
+  return dayjs(date).format('HH:mm:ss');
 }
 
 /**
