@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { Card, Col, Row, Statistic } from "antd";
-import React from "react";
+import { Card, Col, Row, Statistic } from 'antd';
+import React from 'react';
 
-import { formatDuration } from "@/lib/time-utils";
+import { formatDuration } from '@/lib/time-utils';
 
 interface TodayStatsCardProps {
   totalSeconds: number;
@@ -19,18 +19,12 @@ export const TodayStatsCard: React.FC<TodayStatsCardProps> = ({
   return (
     <Card>
       <Row gutter={16}>
-        <Col xs={24} sm={8}>
-          <Statistic title="Tổng thời gian hôm nay" value={formatDuration(totalSeconds)} className="text-green-700" />
-        </Col>
-        <Col xs={24} sm={8}>
+        <Col xs={24} sm={24}>
           <Statistic
-            title={<span className="flex items-center gap-1">Số phiên học</span>}
-            value={sessionCount}
-            suffix="phiên"
+            title="Tổng thời gian hôm nay"
+            value={formatDuration(totalSeconds)}
+            className="text-green-700"
           />
-        </Col>
-        <Col xs={24} sm={8}>
-          <Statistic title="Trung bình/phiên" value={formatDuration(averageSessionDuration)} />
         </Col>
       </Row>
     </Card>

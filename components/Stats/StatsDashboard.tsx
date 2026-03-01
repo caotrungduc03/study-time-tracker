@@ -7,13 +7,13 @@ import { useEffect, useState } from 'react';
 
 import { useStatistics } from '@/hooks/useStatistics';
 import { getSessionsByDateRange } from '@/lib/db/operations';
-import { getDateString,getSessionDuration } from '@/lib/time-utils';
+import { getDateString, getSessionDuration } from '@/lib/time-utils';
 import type { DailyStat } from '@/types';
 
 import type { TabKey } from '../../types/stats';
-import { AllTimeStats } from './AllTimeStats';
-import { DailySummary } from './DailySummary';
+import { AllTimeOverview } from './AllTimeOverview';
 import { MonthlyOverview } from './MonthlyOverview';
+import { WeeklyOverview } from './WeeklyOverview';
 import { YearlyOverview } from './YearlyOverview';
 
 export function StatsDashboard() {
@@ -78,7 +78,7 @@ export function StatsDashboard() {
     {
       key: 'week',
       label: 'Tuần',
-      children: <DailySummary stats={weekStats} />,
+      children: <WeeklyOverview stats={weekStats} />,
     },
     {
       key: 'month',
@@ -93,14 +93,14 @@ export function StatsDashboard() {
     {
       key: 'all-time',
       label: 'Toàn bộ thời gian',
-      children: <AllTimeStats stats={allTimeStats} />,
+      children: <AllTimeOverview stats={allTimeStats} />,
     },
   ];
 
   return (
     <div className="stats-dashboard">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-2xl font-bold">📊 Thống kê học tập</h2>
+        <h2 className="text-2xl font-bold">📈 Thống kê học tập</h2>
         <Button icon={<ReloadOutlined />} onClick={refresh} loading={loading}>
           Cập nhật dữ liệu
         </Button>

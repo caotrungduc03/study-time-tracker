@@ -17,75 +17,47 @@ import {
 import { formatTime } from '@/lib/time-utils';
 import type { DailyStat } from '@/types';
 
-import type { MonthDateRange, MonthlyChartData } from '../../types/stats';
-import { CustomTooltip, monthlyChartFormatter } from './ChartTooltip';
+import type { DailyChartData } from '../../types/stats';
+import { CustomTooltip, dailyChartFormatter } from './ChartTooltip';
 import { StatsCard } from './StatsCard';
 
-interface MonthlyOverviewProps {
+interface WeeklyOverviewProps {
   stats: DailyStat[];
 }
 
-export function MonthlyOverview({ stats }: MonthlyOverviewProps) {
-  const monthDateRange = useMemo((): MonthDateRange => {
-    const now = dayjs();
-    return { start: now.year(), end: now.month() };
-  }, []);
+export function WeeklyOverview({ stats }: WeeklyOverviewProps) {
+  const weekDateRange = useMemo(() => {
+    if (stats.length === 0) return '';
+    const firstDate = dayjs(stats[0].date);
+    const lastDate = dayjs(stats[stats.length - 1].date);
+    const firstDay = firstDate.format('DD/MM');
+    const lastDay = lastDate.format('DD/MM');
+    return `${firstDay} - ${lastDay}`;
+  }, [stats]);
 
-  const completeStats = useMemo(() => {
-    const startOfMonth = dayjs()
-      .year(monthDateRange.start)
-      .month(monthDateRange.end)
-      .startOf('month');
-    const daysInMonth = startOfMonth.daysInMonth();
-    const monthDates: string[] = [];
-
-    for (let day = 0; day < daysInMonth; day++) {
-      monthDates.push(startOfMonth.add(day, 'day').format('YYYY-MM-DD'));
-    }
-
-    const statsMap = new Map(stats.map((s) => [s.date, s]));
-
-    return monthDates.map((date) => {
-      return (
-        statsMap.get(date) || {
-          id: date,
-          date,
-          totalSeconds: 0,
-          sessionCount: 0,
-          normalSeconds: 0,
-          pomodoroWorkSeconds: 0,
-          pomodoroBreakSeconds: 0,
-          sessions: [],
-          averageSessionDuration: 0,
-          longestSessionDuration: 0,
-          lastUpdated: new Date().toISOString(),
-        }
-      );
-    });
-  }, [stats, monthDateRange]);
-
-  const chartData = useMemo((): MonthlyChartData[] => {
-    return completeStats.map((stat) => {
+  const chartData = useMemo((): DailyChartData[] => {
+    const last7Days = stats.slice(-7);
+    return last7Days.map((stat) => {
       const date = dayjs(stat.date);
+      const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+      const dayOfWeek = date.day();
       return {
         date: stat.date,
-        day: date.date(),
+        label: dayNames[dayOfWeek],
         hours: Math.round((stat.totalSeconds / 3600) * 100) / 100,
         totalSeconds: stat.totalSeconds,
         sessionCount: stat.sessionCount,
       };
     });
-  }, [completeStats]);
+  }, [stats]);
 
-  const monthTotal = useMemo(() => {
-    return completeStats.reduce((sum, stat) => sum + stat.totalSeconds, 0);
-  }, [completeStats]);
+  const totalSeconds = useMemo(() => {
+    return stats.reduce((sum, stat) => sum + stat.totalSeconds, 0);
+  }, [stats]);
 
   const averagePerDay = useMemo(() => {
     const today = dayjs();
-    const validStats = completeStats.filter(
-      (s) => !dayjs(s.date).isSame(today, 'day'),
-    );
+    const validStats = stats.filter((s) => !dayjs(s.date).isSame(today, 'day'));
     const validTotalSeconds = validStats.reduce(
       (sum, stat) => sum + stat.totalSeconds,
       0,
@@ -94,21 +66,22 @@ export function MonthlyOverview({ stats }: MonthlyOverviewProps) {
       (s) => s.totalSeconds > 0,
     ).length;
     return validDaysWithData > 0 ? validTotalSeconds / validDaysWithData : 0;
-  }, [completeStats]);
+  }, [stats]);
 
-  const monthTitle = useMemo(() => {
-    const now = dayjs();
-    const month = now.month() + 1;
-    const daysInMonth = now.daysInMonth();
-    return `1 - ${daysInMonth} (Tháng ${month})`;
-  }, []);
+  if (stats.length === 0) {
+    return (
+      <Card title={`📅 Tuần (${weekDateRange})`}>
+        <p className="py-8 text-center text-gray-500">Chưa có dữ liệu</p>
+      </Card>
+    );
+  }
 
   return (
-    <Card title={`📅 ${monthTitle}`}>
+    <Card title={`📅 Tuần (${weekDateRange})`}>
       <Row gutter={[16, 16]} className="mb-6">
         <StatsCard
           label="Tổng thời gian"
-          value={formatTime(monthTotal)}
+          value={formatTime(totalSeconds)}
           color="blue"
           format="number"
         />
@@ -128,17 +101,13 @@ export function MonthlyOverview({ stats }: MonthlyOverviewProps) {
             margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis
-              dataKey="day"
-              tick={{ fontSize: 12 }}
-              interval={Math.floor(chartData.length / 15)}
-            />
+            <XAxis dataKey="label" tick={{ fontSize: 12 }} />
             <YAxis
               label={{ value: 'Giờ', angle: -90, position: 'insideLeft' }}
               tick={{ fontSize: 12 }}
             />
             <Tooltip
-              content={<CustomTooltip dataFormatter={monthlyChartFormatter} />}
+              content={<CustomTooltip dataFormatter={dailyChartFormatter} />}
             />
             <Bar dataKey="hours" radius={[8, 8, 0, 0]}>
               {chartData.map((entry, index) => (

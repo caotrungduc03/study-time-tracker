@@ -21,11 +21,11 @@ import type { AllTimeChartData } from '../../types/stats';
 import { allTimeChartFormatter, CustomTooltip } from './ChartTooltip';
 import { StatsCard } from './StatsCard';
 
-interface AllTimeStatsProps {
+interface AllTimeOverviewProps {
   stats: DailyStat[];
 }
 
-export function AllTimeStats({ stats }: AllTimeStatsProps) {
+export function AllTimeOverview({ stats }: AllTimeOverviewProps) {
   const chartData = useMemo((): AllTimeChartData[] => {
     if (stats.length === 0) return [];
 
@@ -96,14 +96,24 @@ export function AllTimeStats({ stats }: AllTimeStatsProps) {
     return stats.reduce((sum, stat) => sum + stat.totalSeconds, 0);
   }, [stats]);
 
-  const allTimeSessions = useMemo(() => {
-    return stats.reduce((sum, stat) => sum + stat.sessionCount, 0);
-  }, [stats]);
-
   const averagePerMonth = useMemo(() => {
-    const monthsWithData = chartData.filter((m) => m.totalSeconds > 0).length;
-    return monthsWithData > 0 ? allTimeTotal / monthsWithData : 0;
-  }, [allTimeTotal, chartData]);
+    const thisMonth = dayjs();
+    const validStats = stats.filter(
+      (s) => !dayjs(s.date).isSame(thisMonth, 'month'),
+    );
+    const validTotalSeconds = validStats.reduce(
+      (sum, stat) => sum + stat.totalSeconds,
+      0,
+    );
+    const validMonthsWithData = new Set(
+      validStats
+        .filter((s) => s.totalSeconds > 0)
+        .map((s) => dayjs(s.date).format('YYYY-MM')),
+    ).size;
+    return validMonthsWithData > 0
+      ? validTotalSeconds / validMonthsWithData
+      : 0;
+  }, [stats]);
 
   const allTimeTitle = useMemo(() => {
     const now = dayjs();
@@ -114,25 +124,19 @@ export function AllTimeStats({ stats }: AllTimeStatsProps) {
 
   if (stats.length === 0) {
     return (
-      <Card title={`📊 ${allTimeTitle}`}>
+      <Card title={`📅 ${allTimeTitle}`}>
         <p className="py-8 text-center text-gray-500">Chưa có dữ liệu</p>
       </Card>
     );
   }
 
   return (
-    <Card title={`📊 ${allTimeTitle}`}>
+    <Card title={`📅 ${allTimeTitle}`}>
       <Row gutter={[16, 16]} className="mb-6">
         <StatsCard
           label="Tổng thời gian"
           value={formatTime(allTimeTotal)}
           color="blue"
-          format="number"
-        />
-        <StatsCard
-          label="Tổng phiên học"
-          value={allTimeSessions}
-          color="green"
           format="number"
         />
         <StatsCard
@@ -144,7 +148,7 @@ export function AllTimeStats({ stats }: AllTimeStatsProps) {
       </Row>
 
       <div className="rounded-lg bg-white p-4">
-        <h3 className="mb-4 font-semibold">Thống kê theo tháng</h3>
+        <h3 className="mb-4 font-semibold">Chi tiết theo tháng</h3>
         {chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height={350}>
             <BarChart
