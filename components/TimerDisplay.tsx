@@ -8,9 +8,15 @@ interface TimerDisplayProps {
   seconds: number;
   size?: 'default' | 'large';
   isFullPage?: boolean;
+  isPiP?: boolean;
 }
 
-export function TimerDisplay({ seconds, size = 'large', isFullPage = false }: TimerDisplayProps) {
+export function TimerDisplay({
+  seconds,
+  size = 'large',
+  isFullPage = false,
+  isPiP = false,
+}: TimerDisplayProps) {
   const MAX_REASONABLE_SECONDS = 7 * 24 * 60 * 60;
   const isValid = seconds >= 0 && seconds < MAX_REASONABLE_SECONDS;
 
@@ -18,16 +24,21 @@ export function TimerDisplay({ seconds, size = 'large', isFullPage = false }: Ti
 
   const fontSize = isFullPage
     ? 'text-[6rem] md:text-[10rem] leading-none'
-    : size === 'large'
-      ? 'text-6xl md:text-8xl leading-none'
-      : 'text-4xl md:text-6xl leading-none';
+    : isPiP
+      ? 'text-6xl md:text-7xl leading-none'
+      : size === 'large'
+        ? 'text-6xl md:text-8xl leading-none'
+        : 'text-4xl md:text-6xl leading-none';
 
-  const validColor = isFullPage
-    ? 'text-blue-400 drop-shadow-[0_0_20px_rgba(96,165,250,0.3)]'
-    : 'text-study-active drop-shadow-md';
+  const validColor =
+    isFullPage || isPiP
+      ? 'text-blue-400 drop-shadow-[0_0_20px_rgba(96,165,250,0.3)]'
+      : 'text-study-active drop-shadow-md';
 
   return (
-    <div className="flex flex-col items-center justify-center py-8">
+    <div
+      className={`flex flex-col items-center justify-center ${isPiP ? 'py-3' : 'py-6'}`}
+    >
       {!isValid && (
         <div className="mb-2 max-w-md text-center text-sm text-red-500">
           ⚠️ Phát hiện dữ liệu bị hỏng (thời gian không hợp lệ)

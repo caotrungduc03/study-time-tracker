@@ -230,7 +230,6 @@ export async function getUnfinishedSessions(): Promise<StudySession[]> {
  */
 export async function getTodaySessions(): Promise<StudySession[]> {
   const today = getDateString();
-  console.log({ today });
   return getSessionsByDate(today);
 }
 

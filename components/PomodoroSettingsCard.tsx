@@ -95,7 +95,7 @@ function PomodoroSettingsCard({ disabled = false }: PomodoroSettingsCardProps) {
       <div className="flex flex-col items-stretch justify-between gap-4 sm:flex-row">
         <div className="flex flex-wrap gap-3">
           <Tooltip title="Thời gian tập trung">
-            <div className="min-w-[120px] rounded-lg border border-gray-200 bg-gray-50 p-3 transition-colors hover:border-orange-300">
+            <div className="min-w-32 rounded-lg border border-gray-200 bg-gray-50 p-3 transition-colors hover:border-orange-300">
               <div className="mb-1.5 flex items-center gap-1.5 text-gray-500">
                 <ClockCircleOutlined className="text-study-pomodoro" />
                 <span>Tập trung (phút)</span>
@@ -111,7 +111,7 @@ function PomodoroSettingsCard({ disabled = false }: PomodoroSettingsCardProps) {
           </Tooltip>
 
           <Tooltip title="Thời gian nghỉ ngơi">
-            <div className="min-w-[120px] rounded-lg border border-gray-200 bg-gray-50 p-3 transition-colors hover:border-purple-300">
+            <div className="min-w-32 rounded-lg border border-gray-200 bg-gray-50 p-3 transition-colors hover:border-purple-300">
               <div className="mb-1.5 flex items-center gap-1.5 text-gray-500">
                 <CoffeeOutlined className="text-study-break" />
                 <span>Nghỉ ngơi (phút)</span>
@@ -127,7 +127,7 @@ function PomodoroSettingsCard({ disabled = false }: PomodoroSettingsCardProps) {
           </Tooltip>
 
           <Tooltip title="Số chu kỳ mục tiêu">
-            <div className="min-w-[120px] rounded-lg border border-gray-200 bg-gray-50 p-3 transition-colors hover:border-blue-300">
+            <div className="min-w-32 rounded-lg border border-gray-200 bg-gray-50 p-3 transition-colors hover:border-blue-300">
               <div className="mb-1.5 flex items-center gap-1.5 text-gray-500">
                 <FlagOutlined className="text-study-active" />
                 <span>Mục tiêu (chu kỳ)</span>

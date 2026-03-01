@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 
 import { useStatistics } from '@/hooks/useStatistics';
 import { getSessionsByDateRange } from '@/lib/db/operations';
-import { getSessionDuration, getDateString } from '@/lib/time-utils';
+import { getDateString,getSessionDuration } from '@/lib/time-utils';
 import type { DailyStat } from '@/types';
 
 import type { TabKey } from '../../types/stats';

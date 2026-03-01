@@ -1,13 +1,17 @@
 'use client';
 
-import { CompressOutlined, ExpandOutlined } from '@ant-design/icons';
-import { Button, Card, Tooltip } from 'antd';
+import { FullscreenOutlined, SwitcherOutlined } from '@ant-design/icons';
+import { Card } from 'antd';
 import React from 'react';
+import { createPortal } from 'react-dom';
 
+import { useDocumentPiP } from '@/hooks/useDocumentPiP';
 import { useFullPage } from '@/hooks/useFullscreen';
 
 import { ControlButtons } from './ControlButtons';
+import { TimerActionButtons } from './TimerActionButtons';
 import { TimerDisplay } from './TimerDisplay';
+import { TimerPlaceholder } from './TimerPlaceholder';
 
 interface TimerCardProps {
   currentTime: number;
@@ -29,33 +33,56 @@ export function TimerCard({
   onReset,
 }: TimerCardProps) {
   const { isFullPage, toggleFullPage } = useFullPage();
+  const {
+    isSupported: isPiPSupported,
+    isPiPActive,
+    pipWindow,
+    requestPiP,
+    closePiP,
+  } = useDocumentPiP();
 
-  const actionButtons = (
-    <div className="absolute right-3 top-3 z-10">
-      <Tooltip title={isFullPage ? 'Thu nhỏ' : 'Mở rộng toàn trang'}>
-        <Button
-          type="text"
-          size="small"
-          icon={isFullPage ? <CompressOutlined /> : <ExpandOutlined />}
-          onClick={toggleFullPage}
-          className={
-            isFullPage
-              ? '!border !border-blue-400/40 !bg-blue-400/10 !text-blue-400 hover:!border-blue-300/60 hover:!bg-blue-400/20 hover:!text-blue-200'
-              : 'text-gray-400 hover:text-gray-600'
-          }
-        />
-      </Tooltip>
-    </div>
+  const handlePiP = async () => {
+    if (isPiPActive) {
+      closePiP();
+    } else {
+      await requestPiP({ width: 350, height: 250 });
+    }
+  };
+
+  const actionButtonsLight = (
+    <TimerActionButtons
+      isFullPage={isFullPage}
+      toggleFullPage={toggleFullPage}
+      isPiPSupported={isPiPSupported}
+      isPiPActive={isPiPActive}
+      handlePiP={handlePiP}
+      darkTheme={false}
+    />
   );
 
-  const timerContent = (
+  const actionButtonsDark = (
+    <TimerActionButtons
+      isFullPage={isFullPage}
+      toggleFullPage={toggleFullPage}
+      isPiPSupported={isPiPSupported}
+      isPiPActive={isPiPActive}
+      handlePiP={handlePiP}
+      darkTheme={true}
+    />
+  );
+
+  const timerContentBase = (isDark: boolean, isPiP: boolean) => (
     <>
-      <TimerDisplay seconds={currentTime} isFullPage={isFullPage} />
+      <TimerDisplay
+        seconds={currentTime}
+        isFullPage={isDark && !isPiP}
+        isPiP={isPiP}
+      />
       <ControlButtons
         isRunning={isRunning}
         isPaused={isPaused}
         currentTime={currentTime}
-        isFullPage={isFullPage}
+        isFullPage={isDark}
         onStart={onStart}
         onPause={onPause}
         onResume={onResume}
@@ -64,30 +91,66 @@ export function TimerCard({
     </>
   );
 
-  if (isFullPage) {
-    return (
-      <div
-        className="animate-fade-in fixed inset-0 z-[1000] flex items-center justify-center p-8"
-        style={{
-          background:
-            'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
-        }}
-      >
-        <div className="relative w-full max-w-[800px]">
-          {actionButtons}
-          <div className="flex min-h-[60vh] flex-col items-center justify-center">
-            {timerContent}
-          </div>
+  const pipPortal =
+    isPiPActive && pipWindow
+      ? createPortal(
+          <div className="flex h-full w-full flex-col items-center justify-center p-4">
+            {timerContentBase(true, true)}
+          </div>,
+          pipWindow.document.body,
+        )
+      : null;
+
+  const fullscreenOverlay = isFullPage ? (
+    <div
+      className="fixed inset-0 z-[1000] flex animate-fade-in items-center justify-center p-8"
+      style={{
+        background:
+          'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+      }}
+    >
+      <div className="relative w-full max-w-[800px]">
+        {actionButtonsDark}
+        <div className="flex min-h-[60vh] flex-col items-center justify-center">
+          {timerContentBase(true, false)}
         </div>
       </div>
+    </div>
+  ) : null;
+
+  if (isPiPActive || isFullPage) {
+    return (
+      <>
+        {isPiPActive ? (
+          <TimerPlaceholder
+            icon={<SwitcherOutlined />}
+            title="Đang xem ở chế độ PiP"
+            description="Đóng cửa sổ thu nhỏ để quay lại giao diện chính"
+            buttonText="Quay lại"
+            onButtonClick={handlePiP}
+            actionButtons={actionButtonsLight}
+          />
+        ) : (
+          <TimerPlaceholder
+            icon={<FullscreenOutlined />}
+            title="Đang xem ở chế độ toàn trang"
+            description="Thoát chế độ này để tương tác ở giao diện gốc"
+            buttonText="Thu nhỏ"
+            onButtonClick={toggleFullPage}
+            actionButtons={actionButtonsLight}
+          />
+        )}
+        {pipPortal}
+        {fullscreenOverlay}
+      </>
     );
   }
 
   return (
     <Card className="relative w-full overflow-hidden bg-white">
-      {actionButtons}
-      <div className="flex flex-col items-center justify-center py-4">
-        {timerContent}
+      {actionButtonsLight}
+      <div className="flex min-h-60 flex-col items-center justify-center py-4 md:min-h-72">
+        {timerContentBase(false, false)}
       </div>
     </Card>
   );

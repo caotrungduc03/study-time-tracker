@@ -8,7 +8,7 @@ import {
   deleteSession,
   saveOrUpdateSession,
 } from '@/lib/db/operations';
-import { getDateString, toISOString } from '@/lib/db/schema';
+import { toISOString } from '@/lib/db/schema';
 import { useTimerStore } from '@/store/useTimerStore';
 import type { StudySession } from '@/types';
 

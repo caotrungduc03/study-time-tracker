@@ -6,8 +6,8 @@ import React, { useMemo } from 'react';
 import {
   calculateTimelinePosition,
   formatDuration,
-  getTimeString,
   getSessionDuration,
+  getTimeString,
 } from '@/lib/time-utils';
 import type { StudySession } from '@/types';
 import { EVENT_COLORS, TIME_CONSTANTS } from '@/types';
