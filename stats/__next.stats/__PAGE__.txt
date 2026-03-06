@@ -1,9 +1,9 @@
 1:"$Sreact.fragment"
 2:I[47257,["/study-time-tracker/_next/static/chunks/ff1a16fafef87110.js","/study-time-tracker/_next/static/chunks/394c8c43a89afdeb.js"],"ClientPageRoot"]
-3:I[79158,["/study-time-tracker/_next/static/chunks/80b4cd654f151a9f.js","/study-time-tracker/_next/static/chunks/688041a333bfd0a1.js","/study-time-tracker/_next/static/chunks/028636a76e057e58.js","/study-time-tracker/_next/static/chunks/0f04f0a8f07ced08.js","/study-time-tracker/_next/static/chunks/63a4aa7f088a04c0.js","/study-time-tracker/_next/static/chunks/ec8405709d68daa7.js","/study-time-tracker/_next/static/chunks/15dae84190fc2320.js"],"default"]
+3:I[79158,["/study-time-tracker/_next/static/chunks/a6e21ee621dda536.js","/study-time-tracker/_next/static/chunks/c2af3c6d2b78a142.js","/study-time-tracker/_next/static/chunks/9e8079cb85e0569a.js","/study-time-tracker/_next/static/chunks/995655d872573d46.js","/study-time-tracker/_next/static/chunks/87fcf703da021007.js","/study-time-tracker/_next/static/chunks/7101f8bacff71af1.js"],"default"]
 6:I[97367,["/study-time-tracker/_next/static/chunks/ff1a16fafef87110.js","/study-time-tracker/_next/static/chunks/394c8c43a89afdeb.js"],"OutletBoundary"]
 7:"$Sreact.suspense"
-0:{"buildId":"-59D93AGH3kXGbWSZvzOJ","rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","script","script-0",{"src":"/study-time-tracker/_next/static/chunks/ec8405709d68daa7.js","async":true}],["$","script","script-1",{"src":"/study-time-tracker/_next/static/chunks/15dae84190fc2320.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"loading":null,"isPartial":false}
+0:{"buildId":"S6BdDpW0Vp3ew6KX4_so_","rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","script","script-0",{"src":"/study-time-tracker/_next/static/chunks/87fcf703da021007.js","async":true}],["$","script","script-1",{"src":"/study-time-tracker/_next/static/chunks/7101f8bacff71af1.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"loading":null,"isPartial":false}
 4:{}
 5:"$0:rsc:props:children:0:props:serverProvidedParams:params"
 8:null
